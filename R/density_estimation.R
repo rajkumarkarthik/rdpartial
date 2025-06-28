@@ -40,6 +40,10 @@
 #' @param make_plot Logical; if `TRUE` return a `ggplot2` object visualising the
 #'   final fit.
 #' @param seed Optional integer for reproducible fold assignment.
+#' @param solver CVXR solver to use.  Defaults to
+#'   `.get_rdpartial_opt("solver")`.
+#' @param cvx_opts List of solver options passed to `CVXR::solve()`.  Defaults to
+#'   `.get_rdpartial_opt("cvx_opts")`.
 #'
 #' @return A list with components:
 #' * `counts`       – `data.frame(hlevel, n_true)` within `manip_region`.
@@ -60,7 +64,9 @@
                                 mod_types    = c("smooth", "spike_integer"),
                                 lambda       = 100, eps = 1e-6,
                                 folds = NULL, num_folds = 5L,
-                                make_plot = FALSE, seed = NULL) {
+                                make_plot = FALSE, seed = NULL,
+                                solver = .get_rdpartial_opt("solver"),
+                                cvx_opts = .get_rdpartial_opt("cvx_opts")) {
   # ---- sanity checks -------------------------------------------------------
   .check_columns(hist_df, c("hlevel", "freq"))
   stopifnot(is.numeric(hist_df$hlevel), is.numeric(hist_df$freq))
@@ -136,7 +142,7 @@
         obj_cvx  <- CVXR::Maximize(sum(glm_fit$y * (model.matrix(glm_fit) %*% beta_var) -
                                          exp(model.matrix(glm_fit) %*% beta_var)))
         prob_cvx <- CVXR::Problem(obj_cvx, list(ui_mat %*% beta_var - ci_vec >= eps))
-        sol      <- CVXR::solve(prob_cvx)
+        sol      <- CVXR::solve(prob_cvx, solver = solver, .opts = cvx_opts)
         if (sol$status == "solver_error") {
           cv_sse[fold] <- Inf
           next
@@ -179,7 +185,7 @@
   obj_cvx  <- CVXR::Maximize(sum(glm_fit$y * (model.matrix(glm_fit) %*% beta_var) -
                                    exp(model.matrix(glm_fit) %*% beta_var)))
   prob_cvx <- CVXR::Problem(obj_cvx, list(ui_mat %*% beta_var - ci_vec >= eps))
-  sol      <- CVXR::solve(prob_cvx)
+  sol      <- CVXR::solve(prob_cvx, solver = solver, .opts = cvx_opts)
 
   co_res <- stats::constrOptim(theta = as.numeric(sol$getValue(beta_var)),
                                f     = obj_poisson, ui = ui_mat, ci = ci_vec,
