@@ -24,20 +24,19 @@ bootstrap_bounds(
 )
 }
 \arguments{
-\item{data}{A \code{data.frame}.  Must contain at least \code{running_var}, \code{outcome},
-and—when \code{estimator = "fuzzy"}—\code{treatment}.}
+\item{data}{A \code{data.frame} that contains the running variable, outcome and—
+for fuzzy designs—the treatment column.}
 
-\item{running_var, outcome}{Character names of the running variable and outcome
-columns.}
+\item{running_var, outcome}{Character names of the running variable and
+outcome columns.}
 
-\item{treatment}{Character name of the treatment take‑up column (0/1).  Only
-required for \code{estimator = "fuzzy"}.}
+\item{treatment}{Character name of the treatment take‑up column (0/1).
+Required when \code{estimator = "fuzzy"}.}
 
 \item{cutoff}{Numeric RDD threshold.}
 
 \item{manip_regions}{List of numeric length‑2 vectors \verb{(lower, upper)} giving
-suspected manipulation intervals (each must contain the cutoff on its right
-end).}
+suspected manipulation intervals.}
 
 \item{estimator}{Either "fuzzy" (default) or "sharp".}
 
@@ -48,18 +47,19 @@ end).}
 \item{weight_var}{Optional character column in \code{data} holding non‑negative
 observation weights.  If \code{NULL}, each row receives weight 1.}
 
-\item{density_args}{Optional named list with overrides passed to
-\code{.density_estimation()}.}
+\item{density_args}{Optional named list forwarded to \code{.density_estimation()}.}
 
-\item{ci_level}{Bootstrap percentile coverage (default \code{0.95}).}
+\item{ci_level}{Percentile coverage of the bootstrap interval (default
+\code{0.95}).}
 
-\item{parallel}{Logical.  If \code{TRUE}, uses \code{parallel::mclapply()} on non‑Windows
-systems.}
+\item{parallel}{Logical.  If \code{TRUE}, uses \code{parallel::mclapply()} on
+non‑Windows systems.}
 
-\item{n_cores}{Number of cores for parallel execution.  Defaults to
-\code{parallel::detectCores() - 1}.}
+\item{n_cores}{Number of cores for parallel execution (defaults to
+\code{parallel::detectCores() - 1}).}
 
-\item{progress}{Logical – print a progress bar (default \code{TRUE}).}
+\item{progress}{Logical – print a progress bar (default \code{TRUE}).  Progress is
+suppressed automatically when running in parallel to avoid garbled output.}
 
 \item{seed}{Optional integer for reproducibility of resampling.}
 }
@@ -68,21 +68,21 @@ An object of class \code{rdpartial_boot} – a list with elements
 \itemize{
 \item \code{boot_array} – 3‑D array \verb{(n_boot, R, 2)} storing lower/upper bounds.
 \item \code{ci}         – \verb{R × 2} matrix of percentile intervals (\code{lwr}, \code{upr}).
-\item \code{manip_regions}, \code{estimator}, \code{call} – metadata.
+\item \code{manip_regions}, \code{estimator}, \code{call} – metadata for downstream methods.
 }
 }
 \description{
 Draw repeated resamples of the original data \strong{keeping the running‑variable
 distribution fixed} and re‑estimate the sharp or fuzzy RDD bounds for each
-user‑specified manipulation region.  The function is a high‑level wrapper
-around three internal work‑horses:
+user‑specified manipulation region.
 }
 \details{
+This function is a high‑level wrapper around three internal work‑horses:
 \itemize{
 \item \code{.density_estimation()} – estimates non‑manipulated counts (\code{true_counts}).
 \item \code{\link[=bounds_sharp]{bounds_sharp()}} / \code{\link[=bounds_fuzzy]{bounds_fuzzy()}} – compute the Manski bounds.
-\item \code{.poly_design()} / \code{.tricube()} – construct local‑polynomial design and
-kernel weights.
+\item \code{.tricube()} – constructs local‑kernel weights used inside the bounds
+estimators.
 }
 }
 \examples{

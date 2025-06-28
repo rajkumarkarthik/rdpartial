@@ -75,6 +75,21 @@ data frame ready for \code{bounds_sharp()}, \code{bounds_fuzzy()}, and
 \code{bootstrap_bounds()}, while also returning the \emph{true} treatment effect at the
 cutoff for quick sanity checks.
 }
+\section{Outline of the DGP}{
+
+\enumerate{
+\item Draw an \strong{integer} running variable \code{x} from either a Poisson or discrete
+uniform distribution.
+\item (Optional) Manipulate units with \code{x} in \verb{(cutoff − manip_width, cutoff)}
+above the threshold with probability \code{manip_prob}.
+\item Generate potential outcomes \code{Y(0)} and \code{Y(1)} as quadratic functions of
+\code{x} plus Normal noise.
+\item Assign treatment either \emph{sharply} (\verb{z = 1(x ≥ cutoff)}) or \emph{fuzzily} via
+Bernoulli probabilities \code{p0}, \code{p1} below / above the cutoff.
+\item Observe realised outcome \code{y = Y(z)}.
+}
+}
+
 \examples{
 set.seed(42)
 sim <- simulate_rdd_data(n = 2000, cutoff = 16, design = "fuzzy",

@@ -6,7 +6,7 @@
 #' using `CVXR`.  Manipulation to the right of the cutoff is bounded by
 #' `true_counts` obtained from [density_estimation()].
 #'
-#' @section Required Inputs
+#' @section Required Inputs:
 #' * **`x`** – running variable.
 #' * **`y`** – outcome.
 #' * **`z`** – realised treatment indicator (0/1).

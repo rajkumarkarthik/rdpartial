@@ -46,6 +46,17 @@ solves a linear‑fractional programme as described in Rosenman \emph{et al.} (2
 using \code{CVXR}.  Manipulation to the right of the cutoff is bounded by
 \code{true_counts} obtained from \code{\link[=density_estimation]{density_estimation()}}.
 }
+\section{Required Inputs}{
+
+\itemize{
+\item \strong{\code{x}} – running variable.
+\item \strong{\code{y}} – outcome.
+\item \strong{\code{z}} – realised treatment indicator (0/1).
+\item \strong{\code{cutoff}} – threshold.
+\item \strong{\code{true_counts}} – \code{data.frame(x, n_true)} of non‑manipulated counts.
+}
+}
+
 \examples{
 set.seed(321)
 n      <- 6000

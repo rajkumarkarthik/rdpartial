@@ -6,7 +6,7 @@
 #' `bootstrap_bounds()`, while also returning the *true* treatment effect at the
 #' cutoff for quick sanity checks.
 #'
-#' @section Outline of the DGP
+#' @section Outline of the DGP:
 #' 1. Draw an **integer** running variable `x` from either a Poisson or discrete
 #'    uniform distribution.
 #' 2. (Optional) Manipulate units with `x` in `(cutoff − manip_width, cutoff)`

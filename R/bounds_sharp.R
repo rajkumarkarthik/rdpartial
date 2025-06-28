@@ -6,7 +6,7 @@
 #' implementation mirrors Algorithm 1 in Rosenman *et al.* (2025) and is the
 #' foundation for the fuzzy variant [bounds_fuzzy()].
 #'
-#' @section Required Inputs
+#' @section Required Inputs:
 #' * **`x`** – numeric running variable.
 #' * **`y`** – outcome measured under *realised* treatment status (because the
 #'   design is sharp, no separate `z` argument is needed).
