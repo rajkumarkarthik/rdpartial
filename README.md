@@ -8,7 +8,7 @@ The package is not on CRAN.  You can install the development version from a GitH
 
 ```r
 # install.packages("devtools")
-devtools::install_github("<username>/rdpartial")
+devtools::install_github("rajkumarkarthik/rdpartial")
 ```
 
 ## Main functions
@@ -39,3 +39,6 @@ true_counts <- data.frame(
 bounds_sharp(sim$x, sim$y, cutoff = 16, true_counts = true_counts)
 ```
 
+## Credits and disclaimer
+
+This package was developed with partial assistance from OpenAI's ChatGPT language model. The code in this package is provided **"as-is"**, without warranty of any kind, express or implied. Use it at your own risk.
