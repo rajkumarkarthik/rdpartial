@@ -97,7 +97,7 @@ bounds_fuzzy <- function(x, y, z, cutoff,
   for (j in seq_along(uniq_r)) H[j, xr_vals == uniq_r[j]] <- 1
 
   # ---- phi terms ------------------------------------------------------------
-  phi_inv_c <- Xr %*% solve(t(Xr) %*% (t(Xr * (Wr)))) %*% c_star
+  phi_inv_c <- Xr %*% solve(t(Xr) %*% (Xr * Wr)) %*% c_star
   b_num   <- as.vector(y[right] * Wr * phi_inv_c)
   b_den   <- as.vector(z[right] * Wr * phi_inv_c)
 

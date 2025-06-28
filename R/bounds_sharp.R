@@ -99,7 +99,7 @@ bounds_sharp <- function(x, y, cutoff,
   for (j in seq_along(uniq_r)) H[j, xr_vals == uniq_r[j]] <- 1
 
   # Pre-compute phi and b as in paper ----------------------------------------
-  phi_inv_cstar <- Xr %*% solve(t(Xr) %*% (t(Xr * Wr))) %*% c_star
+  phi_inv_cstar <- Xr %*% solve(t(Xr) %*% (Xr * Wr)) %*% c_star
   b_vec <- as.vector(y[right] * Wr * phi_inv_cstar)
 
   # CVXR variables -----------------------------------------------------------
