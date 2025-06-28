@@ -2,43 +2,43 @@
 #'
 #' Draw repeated resamples of the original data **keeping the running‑variable
 #' distribution fixed** and re‑estimate the sharp or fuzzy RDD bounds for each
-#' user‑specified manipulation region.  The function is a high‑level wrapper
-#' around three internal work‑horses:
+#' user‑specified manipulation region.
 #'
+#' This function is a high‑level wrapper around three internal work‑horses:
 #' * `.density_estimation()` – estimates non‑manipulated counts (`true_counts`).
 #' * [bounds_sharp()] / [bounds_fuzzy()] – compute the Manski bounds.
-#' * `.poly_design()` / `.tricube()` – construct local‑polynomial design and
-#'   kernel weights.
+#' * `.tricube()` – constructs local‑kernel weights used inside the bounds
+#'   estimators.
 #'
-#' @param data A `data.frame`.  Must contain at least `running_var`, `outcome`,
-#'   and—when `estimator = "fuzzy"`—`treatment`.
-#' @param running_var,outcome Character names of the running variable and outcome
-#'   columns.
-#' @param treatment Character name of the treatment take‑up column (0/1).  Only
-#'   required for `estimator = "fuzzy"`.
+#' @param data A `data.frame` that contains the running variable, outcome and—
+#'   for fuzzy designs—the treatment column.
+#' @param running_var,outcome Character names of the running variable and
+#'   outcome columns.
+#' @param treatment Character name of the treatment take‑up column (0/1).
+#'   Required when `estimator = "fuzzy"`.
 #' @param cutoff Numeric RDD threshold.
 #' @param manip_regions List of numeric length‑2 vectors `(lower, upper)` giving
-#'   suspected manipulation intervals (each must contain the cutoff on its right
-#'   end).
+#'   suspected manipulation intervals.
 #' @param estimator Either "fuzzy" (default) or "sharp".
 #' @param n_boot Integer number of bootstrap replications (default `200`).
 #' @param poly_order Local polynomial order (default `1`).
 #' @param weight_var Optional character column in `data` holding non‑negative
 #'   observation weights.  If `NULL`, each row receives weight 1.
-#' @param density_args Optional named list with overrides passed to
-#'   `.density_estimation()`.
-#' @param ci_level Bootstrap percentile coverage (default `0.95`).
-#' @param parallel Logical.  If `TRUE`, uses `parallel::mclapply()` on non‑Windows
-#'   systems.
-#' @param n_cores Number of cores for parallel execution.  Defaults to
-#'   `parallel::detectCores() - 1`.
-#' @param progress Logical – print a progress bar (default `TRUE`).
+#' @param density_args Optional named list forwarded to `.density_estimation()`.
+#' @param ci_level Percentile coverage of the bootstrap interval (default
+#'   `0.95`).
+#' @param parallel Logical.  If `TRUE`, uses `parallel::mclapply()` on
+#'   non‑Windows systems.
+#' @param n_cores Number of cores for parallel execution (defaults to
+#'   `parallel::detectCores() - 1`).
+#' @param progress Logical – print a progress bar (default `TRUE`).  Progress is
+#'   suppressed automatically when running in parallel to avoid garbled output.
 #' @param seed Optional integer for reproducibility of resampling.
 #'
 #' @return An object of class `rdpartial_boot` – a list with elements
 #' * `boot_array` – 3‑D array `(n_boot, R, 2)` storing lower/upper bounds.
 #' * `ci`         – `R × 2` matrix of percentile intervals (`lwr`, `upr`).
-#' * `manip_regions`, `estimator`, `call` – metadata.
+#' * `manip_regions`, `estimator`, `call` – metadata for downstream methods.
 #'
 #' @export
 #' @examples
@@ -63,7 +63,8 @@ bootstrap_bounds <- function(data, running_var, outcome, treatment = NULL,
                              density_args = list(), ci_level = 0.95,
                              parallel = FALSE, n_cores = NULL,
                              progress = TRUE, seed = NULL) {
-  # ---- sanity checks --------------------------------------------------------
+
+  # Sanity checks -------------------------------------------------------
   if (!is.data.frame(data)) stop("`data` must be a data.frame.")
   .check_columns(data, c(running_var, outcome))
 
@@ -82,12 +83,18 @@ bootstrap_bounds <- function(data, running_var, outcome, treatment = NULL,
 
   if (!is.null(seed)) set.seed(seed)
 
-  weights <- if (is.null(weight_var)) rep(1, nrow(data)) else {
-    .check_columns(data, weight_var); data[[weight_var]]
+  # User‑supplied observation weights ---------------------------------------
+  user_wts <- if (is.null(weight_var)) rep(1, nrow(data)) else {
+    .check_columns(data, weight_var)
+    w <- data[[weight_var]]
+    if (any(w < 0, na.rm = TRUE)) stop("`weight_var` contains negative values.")
+    w[is.na(w)] <- 0
+    w
   }
 
-  # ---- density estimation on original sample ------------------------------
-  hist_df <- as.data.frame(table(data[[running_var]]))
+  rv_full <- data[[running_var]]
+  # Density estimation on original sample ------------------------------
+  hist_df <- as.data.frame(table(rv_full))
   names(hist_df) <- c("hlevel", "freq")
   hist_df$hlevel <- as.numeric(as.character(hist_df$hlevel))
 
@@ -97,31 +104,8 @@ bootstrap_bounds <- function(data, running_var, outcome, treatment = NULL,
               density_args))
   })
 
-  # ---- helper: build design matrices & weights -----------------------------
-  build_design <- function(df) {
-    rv <- df[[running_var]]
-    yl <- df[[outcome]]
-    zl <- if (!is.null(treatment)) df[[treatment]] else NULL
-
-    left  <- rv <  cutoff
-    right <- rv >= cutoff
-
-    Xl <- .poly_design(rv[left],  poly_order)
-    Xr <- .poly_design(rv[right], poly_order)
-
-    Wl <- .tricube(cutoff - rv[left])
-    Wr <- .tricube(rv[right] - cutoff)
-
-    list(xl = rv[left],  xr = rv[right],
-         Xl = Xl,        Xr = Xr,
-         Yl = yl[left],  Yr = yl[right],
-         Zl = if (!is.null(zl)) zl[left]  else NULL,
-         Zr = if (!is.null(zl)) zl[right] else NULL,
-         Wl = Wl,        Wr = Wr)
-  }
-
-  # ---- bootstrap resampling function ---------------------------------------
-  strata <- split(seq_len(nrow(data)), data[[running_var]])
+  # Bootstrap infrastructure -------------------------------------------
+  strata <- split(seq_len(nrow(data)), rv_full)  # fixed RV distribution
 
   resample_once <- function() {
     idx <- unlist(lapply(strata, function(ix) {
@@ -131,32 +115,55 @@ bootstrap_bounds <- function(data, running_var, outcome, treatment = NULL,
   }
 
   eval_bounds <- function(df) {
-    de <- build_design(df)
+    rv <- df[[running_var]]
+
+    # Kernel weights (tricube) mirroring original script -------------------
+    left  <- rv <  cutoff
+    right <- !left
+
+    wt_kernel <- numeric(length(rv))
+    if (any(left))  wt_kernel[left]  <- .tricube(cutoff - rv[left])
+    if (any(right)) wt_kernel[right] <- .tricube(rv[right] - cutoff)
+
+    weights_vec <- wt_kernel * user_wts[rownames(df)]  # rownames preserved
+
     sapply(seq_along(manip_regions), function(j) {
       tc <- density_list[[j]]$counts
 
       if (estimator == "sharp") {
-        bounds_sharp(x  = de$xr, y = de$Yr, cutoff = cutoff,
-                     weights = de$Wr, poly_order = poly_order,
-                     true_counts = tc, bounds = "both")
+        bounds_sharp(x          = rv,
+                     y          = df[[outcome]],
+                     cutoff     = cutoff,
+                     weights    = weights_vec,
+                     poly_order = poly_order,
+                     true_counts = tc,
+                     bounds      = "both")
       } else {
-        bounds_fuzzy(x = de$xr, y = de$Yr, z = de$Zr, cutoff = cutoff,
-                     weights = de$Wr, poly_order = poly_order,
-                     true_counts = tc, bounds = "both")
+        bounds_fuzzy(x          = rv,
+                     y          = df[[outcome]],
+                     z          = df[[treatment]],
+                     cutoff     = cutoff,
+                     weights    = weights_vec,
+                     poly_order = poly_order,
+                     true_counts = tc,
+                     bounds      = "both")
       }
-    }) # matrix 2 × R
+    })  # returns 2 × R matrix
   }
 
-  # ---- run bootstrap -------------------------------------------------------
+  # Run bootstrap -------------------------------------------------------
+  if (parallel && .Platform$OS.type != "windows") {
+    if (is.null(n_cores)) n_cores <- max(1L, parallel::detectCores() - 1L)
+    runner   <- function(X, FUN) parallel::mclapply(X, FUN, mc.cores = n_cores)
+    progress <- FALSE  # suppress progress bar under fork
+  } else {
+    runner <- lapply
+  }
+
   if (progress) {
     pb <- utils::txtProgressBar(min = 0, max = n_boot, style = 3)
     on.exit(close(pb), add = TRUE)
   }
-
-  runner <- if (parallel && .Platform$OS.type != "windows") {
-    if (is.null(n_cores)) n_cores <- max(1L, parallel::detectCores() - 1L)
-    function(X, FUN) parallel::mclapply(X, FUN, mc.cores = n_cores)
-  } else lapply
 
   boot_list <- runner(seq_len(n_boot), function(i) {
     df_bs <- resample_once()
@@ -165,13 +172,15 @@ bootstrap_bounds <- function(data, running_var, outcome, treatment = NULL,
     res
   })
 
-  # Convert to array: (n_boot, R, 2) ----------------------------------------
+  # Convert to array: (n_boot, R, 2) ---------------------------------------
   R <- length(manip_regions)
   boot_array <- array(NA_real_, dim = c(n_boot, R, 2),
-                      dimnames = list(NULL, paste0("region", seq_len(R)), c("lower", "upper")))
+                      dimnames = list(NULL,
+                                      paste0("region", seq_len(R)),
+                                      c("lower", "upper")))
   for (i in seq_len(n_boot)) boot_array[i, , ] <- t(boot_list[[i]])
 
-  # ---- percentile CIs ------------------------------------------------------
+  # Percentile CIs ------------------------------------------------------
   pr <- c((1 - ci_level) / 2, 1 - (1 - ci_level) / 2)
   ci_mat <- matrix(NA_real_, nrow = R, ncol = 2,
                    dimnames = list(paste0("region", seq_len(R)), c("lwr", "upr")))
@@ -189,7 +198,7 @@ bootstrap_bounds <- function(data, running_var, outcome, treatment = NULL,
             class = "rdpartial_boot")
 }
 
-# ---- S3 print method --------------------------------------------------------
+# S3 print method -----------------------------------------------------------
 #' @export
 print.rdpartial_boot <- function(x, ...) {
   lvl <- format(attr(x$ci, "level") * 100, digits = 3)

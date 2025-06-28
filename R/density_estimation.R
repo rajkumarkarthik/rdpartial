@@ -195,8 +195,14 @@
   preds <- exp(mm_full %*% co_res$par)
 
   # Output -------------------------------------------------------------------
-  counts_df <- data.frame(hlevel = hist_df$hlevel[in_manip],
-                          n_true = preds[in_manip])
+  right_side <- hist_df$hlevel >= cutoff
+  n_true_vec <- hist_df$freq                       # start with observed counts
+  n_true_vec[in_manip & right_side] <- preds[in_manip & right_side]
+
+  counts_df <- data.frame(
+    x      = hist_df$hlevel[right_side],
+    n_true = round(n_true_vec[right_side])
+  )
 
   plot_out <- NULL
   if (make_plot) {
