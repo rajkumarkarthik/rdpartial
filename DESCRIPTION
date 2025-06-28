@@ -1,10 +1,10 @@
 Package: rdpartial
-Title: Partial Identification for Manipulated Regression Discontinuity
+Title: Partial Identification for Manipulated Regression Discontinuity Designs
 Version: 0.1.0
 Authors@R: 
     c(
-      person(given = "Jane", family = "Doe", email = "jane.doe@example.com", role = c("aut", "cre")),
-      person(given = "John", family = "Smith", email = "john.smith@example.com", role = "ctb")
+      person(given = "Karthik", family = "Rajkumar", email = "karthikr@alumni.stanford.edu", role = c("aut", "cre")),
+      person(given = "Evan", family = "Rosenman", email = "erosenman@cmc.edu", role = c("aut", "cre"))
     )
 Description: Implements the partial identification approach for regression
     discontinuity designs when units may manipulate the running variable.
