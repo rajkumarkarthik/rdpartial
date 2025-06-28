@@ -4,17 +4,19 @@ Version: 0.1.0
 Authors@R: 
     c(
       person(given = "Karthik", family = "Rajkumar", email = "karthikr@alumni.stanford.edu", role = c("aut", "cre")),
-      person(given = "Evan", family = "Rosenman", email = "erosenman@cmc.edu", role = c("aut", "cre"))
+      person(given = "Evan", family = "Rosenman", email = "erosenman@cmc.edu", role = c("aut"))
     )
+Maintainer: Karthik Rajkumar <karthikr@alumni.stanford.edu>
 Description: Implements the partial identification approach for regression
     discontinuity designs when units may manipulate the running variable.
     Provides functions to estimate bounds for sharp and fuzzy designs,
     utilities for density estimation, simulation helpers and a bootstrap
     routine for confidence intervals.
-License: GPL-3
+License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Imports: CVXR, ggplot2, splines, stats, parallel
-Suggests: testthat
+Suggests: 
+    testthat (>= 3.0.0)
 Config/testthat/edition: 3
