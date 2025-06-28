@@ -14,7 +14,8 @@
 #' knots / spike structure is chosen by $K$‑fold cross‑validation.  The final
 #' step predicts the expected counts in the manipulation interval, which serve
 #' as the "true" (non‑manipulated) totals fed into the partial‑bounds
-#' estimators.
+#' estimators.  Bins with zero counts receive a tiny offset before logging so
+#' that the inequality constraints remain finite.
 #'
 #' @param hist_df `data.frame` with columns `hlevel` (numeric support points)
 #'   and `freq` (integer counts).
@@ -80,7 +81,10 @@
   right_sub  <- with(hist_df, hlevel >= cutoff          & hlevel <= manip_region[2])
   hist_donut <- hist_df[!in_manip, , drop = FALSE]
   mid_vol    <- sum(hist_df$freq[in_manip])
-  ci_vec     <- c(log(hist_df$freq[left_sub]), -log(hist_df$freq[right_sub]))
+  # Small offset prevents log(0) when bins have zero counts
+  offset     <- .Machine$double.eps
+  ci_vec     <- c(log(hist_df$freq[left_sub]  + offset),
+                  -log(hist_df$freq[right_sub] + offset))
 
   # CV folds -----------------------------------------------------------------
   if (is.null(folds)) {
