@@ -35,8 +35,8 @@ sim <- simulate_rdd_data(n = 2000, cutoff = 16, design = "sharp",
 post <- sim$x[sim$x >= 16]
 n_bins <- max(post) - 16 + 1
 true_counts <- data.frame(
-  x      = 16:max(sim$x),
-  n_true = round(tabulate(sim$x[sim$x >= 16] + 1L) * 0.9)
+  x      = 16:max(post),
+  n_true = round(tabulate(post - 16 + 1, nbins = n_bins) * 0.9)
 )
 
 # Compute lower and upper bounds at the cutoff
