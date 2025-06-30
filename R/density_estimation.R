@@ -148,9 +148,22 @@
           next
         }
 
+        theta0 <- as.numeric(sol$getValue(beta_var))
+        # Compute per-constraint slack and build an interior RHS
+        slack  <- as.vector(ui_mat %*% theta0 - ci_vec)
+        min_sl <- min(slack)
+        # If the smallest slack ≤ 0, shift *all* constraints inward so that
+        # the CVXR point is strictly interior; otherwise just give a tiny buffer.
+        if (min_sl <= 0) {
+          ci_int <- ci_vec + min_sl - 1e-8
+        } else {
+          ci_int <- ci_vec - 1e-8
+        }
+
         co_res <- stats::constrOptim(theta = as.numeric(sol$getValue(beta_var)),
                                      f     = obj_poisson,
-                                     ui    = ui_mat, ci = ci_vec,
+                                     grad  = NULL,
+                                     ui    = ui_mat, ci = ci_int,
                                      yy    = glm_fit$y, mm = model.matrix(glm_fit),
                                      mm_donut = mm_donut, mid_vol = mid_vol,
                                      lambda_val = lambda)
@@ -187,8 +200,21 @@
   prob_cvx <- CVXR::Problem(obj_cvx, list(ui_mat %*% beta_var - ci_vec >= eps))
   sol      <- CVXR::solve(prob_cvx, solver = solver, .opts = cvx_opts)
 
+  theta0 <- as.numeric(sol$getValue(beta_var))
+  # Compute per-constraint slack and build an interior RHS
+  slack  <- as.vector(ui_mat %*% theta0 - ci_vec)
+  min_sl <- min(slack)
+  # If the smallest slack ≤ 0, shift *all* constraints inward so that
+  # the CVXR point is strictly interior; otherwise just give a tiny buffer.
+  if (min_sl <= 0) {
+    ci_int <- ci_vec + min_sl - 1e-8
+  } else {
+    ci_int <- ci_vec - 1e-8
+  }
+
   co_res <- stats::constrOptim(theta = as.numeric(sol$getValue(beta_var)),
-                               f     = obj_poisson, ui = ui_mat, ci = ci_vec,
+                               f     = obj_poisson, grad = NULL,
+                               ui = ui_mat, ci = ci_int,
                                yy    = glm_fit$y, mm = model.matrix(glm_fit),
                                mm_donut = mm_donut, mid_vol = mid_vol,
                                lambda_val = lambda)
