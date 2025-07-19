@@ -57,7 +57,11 @@ bounds_fuzzy <- function(x, y, z, cutoff,
   if (is.null(weights)) {
     weights <- rep(1, length(x))
   } else {
-    stopifnot(is.numeric(weights), length(weights) == length(x), all(weights >= 0))
+    if (any(is.na(weights))) weights[is.na(weights)] <- 0
+    tiny_neg <- weights < 0 & weights > -sqrt(.Machine$double.eps)
+    weights[tiny_neg] <- 0
+    stopifnot(is.numeric(weights), length(weights) == length(x),
+              all(weights >= 0))
   }
 
   bounds          <- match.arg(bounds)

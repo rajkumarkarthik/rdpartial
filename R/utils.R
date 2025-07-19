@@ -68,7 +68,8 @@
     return(matrix(1, nrow = length(x), ncol = 1L))
   }
 
-  cbind(1, vapply(seq_len(order), function(p) x^p, numeric(length(x))))
+  powers <- outer(x, seq_len(order), `^`)   # nrow = length(x)
+  cbind(1, powers)
 }
 
 #' Truncated tricube kernel weights
@@ -81,11 +82,24 @@
 #' @return Numeric vector of the same length, each element in `[0, 1]`.
 #' @keywords internal
 .tricube <- function(dist) {
-  if (!is.numeric(dist) || any(is.na(dist)) || any(dist < 0)) {
-    stop("`dist` must be a non‑negative numeric vector without NAs.", call. = FALSE)
-  }
-  if (length(dist) == 0L) return(numeric(0L))
-  if (all(dist == 0))    return(rep(1, length(dist)))
+  if (!is.numeric(dist) || any(is.na(dist)) || any(dist < 0))
+    stop("`dist` must be a non-negative numeric vector without NAs.", call. = FALSE)
 
-  (1 - (dist / max(dist))^3)^3
+  if (length(dist) == 0L) return(numeric(0))
+  if (all(dist == 0))     return(rep(1, length(dist)))
+
+  wt <- (1 - (dist / max(dist))^3)^3
+  wt[wt < 0] <- 0
+  wt
+}
+
+#' Sanitise a weight vector (internal)
+#'
+#' Replaces NA with 0 and clips machine-precision negatives to 0.
+#' @keywords internal
+.sanitize_weights <- function(w) {
+  w[is.na(w)] <- 0
+  tiny_neg <- w < 0 & w > -sqrt(.Machine$double.eps)
+  w[tiny_neg] <- 0
+  w
 }

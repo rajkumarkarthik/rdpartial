@@ -91,12 +91,13 @@ bootstrap_bounds <- function(data, running_var, outcome, treatment = NULL,
     w[is.na(w)] <- 0
     w
   }
+  names(user_wts) <- rownames(data)
 
   rv_full <- data[[running_var]]
   # Density estimation on original sample ------------------------------
   hist_df <- as.data.frame(table(rv_full))
   names(hist_df) <- c("x", "freq")
-  hist_df$hlevel <- as.numeric(as.character(hist_df$hlevel))
+  hist_df$x <- as.numeric(as.character(hist_df$x))
 
   density_list <- lapply(manip_regions, function(rg) {
     do.call(rdpartial:::.density_estimation,
@@ -105,16 +106,19 @@ bootstrap_bounds <- function(data, running_var, outcome, treatment = NULL,
   })
 
   # Bootstrap infrastructure -------------------------------------------
-  strata <- split(seq_len(nrow(data)), rv_full)  # fixed RV distribution
+  strata <- split(seq_len(nrow(data)), rv_full)        # keep RV dist fixed
 
-  resample_once <- function() {
-    idx <- unlist(lapply(strata, function(ix) {
+  resample_idx_once <- function() {
+    unlist(lapply(strata, function(ix) {
       if (length(ix) == 1L) ix else sample(ix, replace = TRUE)
     }), use.names = FALSE)
-    data[idx, , drop = FALSE]
   }
 
-  eval_bounds <- function(df) {
+  boot_indices <- lapply(seq_len(n_boot), function(i) resample_idx_once())
+
+  ## Helper now receives an index vector instead of a data.frame
+  eval_bounds <- function(idx_vec) {
+    df <- data[idx_vec, , drop = FALSE]
     rv <- df[[running_var]]
 
     # Kernel weights (tricube) mirroring original script -------------------
@@ -125,7 +129,9 @@ bootstrap_bounds <- function(data, running_var, outcome, treatment = NULL,
     if (any(left))  wt_kernel[left]  <- .tricube(cutoff - rv[left])
     if (any(right)) wt_kernel[right] <- .tricube(rv[right] - cutoff)
 
-    weights_vec <- wt_kernel * user_wts[rownames(df)]  # rownames preserved
+    row_idx <- as.integer(sub("\\..*$", "", rownames(df)))  # strip ".1", ".2", …
+    weights_vec <- wt_kernel * user_wts[row_idx]
+    weights_vec <- .sanitize_weights(weights_vec)
 
     sapply(seq_along(manip_regions), function(j) {
       tc <- density_list[[j]]$counts
@@ -166,8 +172,7 @@ bootstrap_bounds <- function(data, running_var, outcome, treatment = NULL,
   }
 
   boot_list <- runner(seq_len(n_boot), function(i) {
-    df_bs <- resample_once()
-    res   <- eval_bounds(df_bs)
+    res <- eval_bounds(boot_indices[[i]])
     if (progress) utils::setTxtProgressBar(pb, i)
     res
   })
