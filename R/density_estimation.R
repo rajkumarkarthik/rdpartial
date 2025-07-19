@@ -17,7 +17,7 @@
 #' estimators.  Bins with zero counts receive a tiny offset before logging so
 #' that the inequality constraints remain finite.
 #'
-#' @param hist_df `data.frame` with columns `hlevel` (numeric support points)
+#' @param hist_df `data.frame` with columns `x` (numeric support points)
 #'   and `freq` (integer counts).
 #' @param manip_region Numeric length‑2 vector giving the suspected manipulation
 #'   interval *(lower, upper)* **inclusive**.  Must contain the cutoff on its
@@ -46,7 +46,7 @@
 #'   `.get_rdpartial_opt("cvx_opts")`.
 #'
 #' @return A list with components:
-#' * `counts`       – `data.frame(hlevel, n_true)` within `manip_region`.
+#' * `counts`       – `data.frame(x, n_true)` within `manip_region`.
 #' * `avg_cv_sse`   – cross‑validated SSE (per bin) for the chosen model.
 #' * `avg_sse`      – in‑sample SSE outside `manip_region`.
 #' * `knots`        – optimal knot count.
@@ -68,8 +68,8 @@
                                 solver = .get_rdpartial_opt("solver"),
                                 cvx_opts = .get_rdpartial_opt("cvx_opts")) {
   # ---- sanity checks -------------------------------------------------------
-  .check_columns(hist_df, c("hlevel", "freq"))
-  stopifnot(is.numeric(hist_df$hlevel), is.numeric(hist_df$freq))
+  .check_columns(hist_df, c("x", "freq"))
+  stopifnot(is.numeric(hist_df$x), is.numeric(hist_df$freq))
   if (any(hist_df$freq < 0)) stop("`freq` must be non‑negative.", call. = FALSE)
 
   if (!is.null(seed)) set.seed(seed)
@@ -82,9 +82,9 @@
   }
 
   # Basic indices ------------------------------------------------------------
-  in_manip   <- with(hist_df, hlevel >= manip_region[1] & hlevel <= manip_region[2])
-  left_sub   <- with(hist_df, hlevel >= manip_region[1] & hlevel <  cutoff)
-  right_sub  <- with(hist_df, hlevel >= cutoff          & hlevel <= manip_region[2])
+  in_manip   <- with(hist_df, x >= manip_region[1] & x <= manip_region[2])
+  left_sub   <- with(hist_df, x >= manip_region[1] & x <  cutoff)
+  right_sub  <- with(hist_df, x >= cutoff          & x <= manip_region[2])
   hist_donut <- hist_df[!in_manip, , drop = FALSE]
   mid_vol    <- sum(hist_df$freq[in_manip])
   # Small offset prevents log(0) when bins have zero counts
@@ -121,10 +121,10 @@
       for (fold in seq_len(num_folds)) {
         # Build full model matrix ----------------------------------------
         mm_full <- switch(m_type,
-                          smooth        = model.matrix(~ splines::bs(hlevel, k),              data = hist_df),
-                          spike_integer = model.matrix(~ splines::bs(hlevel, k) + I(round(hlevel) == hlevel), data = hist_df),
-                          spike_half    = model.matrix(~ splines::bs(hlevel, k) + I(round(hlevel) == hlevel) +
-                                                         I((10 * hlevel) %% 10 == 5),         data = hist_df),
+                          smooth        = model.matrix(~ splines::bs(x, k),              data = hist_df),
+                          spike_integer = model.matrix(~ splines::bs(x, k) + I(round(x) == x), data = hist_df),
+                          spike_half    = model.matrix(~ splines::bs(x, k) + I(round(x) == x) +
+                                                         I((10 * x) %% 10 == 5),         data = hist_df),
                           stop("Unknown model type: ", m_type, call. = FALSE)
         )
 
@@ -181,10 +181,10 @@
 
   # ---- Refit on full dataset using best spec -------------------------------
   mm_full <- switch(best_type,
-                    smooth        = model.matrix(~ splines::bs(hlevel, best_k), data = hist_df),
-                    spike_integer = model.matrix(~ splines::bs(hlevel, best_k) + I(round(hlevel) == hlevel), data = hist_df),
-                    spike_half    = model.matrix(~ splines::bs(hlevel, best_k) + I(round(hlevel) == hlevel) +
-                                                   I((10 * hlevel) %% 10 == 5), data = hist_df)
+                    smooth        = model.matrix(~ splines::bs(x, best_k), data = hist_df),
+                    spike_integer = model.matrix(~ splines::bs(x, best_k) + I(round(x) == x), data = hist_df),
+                    spike_half    = model.matrix(~ splines::bs(x, best_k) + I(round(x) == x) +
+                                                   I((10 * x) %% 10 == 5), data = hist_df)
   )
 
   mm_donut <- mm_full[in_manip, , drop = FALSE]
@@ -221,12 +221,12 @@
   preds <- exp(mm_full %*% co_res$par)
 
   # Output -------------------------------------------------------------------
-  right_side <- hist_df$hlevel >= cutoff
+  right_side <- hist_df$x >= cutoff
   n_true_vec <- hist_df$freq                       # start with observed counts
   n_true_vec[in_manip & right_side] <- preds[in_manip & right_side]
 
   counts_df <- data.frame(
-    x      = hist_df$hlevel[right_side],
+    x      = hist_df$x[right_side],
     n_true = round(n_true_vec[right_side])
   )
 
@@ -236,7 +236,7 @@
     tmp$manip <- ifelse(in_manip, "Yes", "No")
     tmp$pred  <- preds
 
-    plot_out <- ggplot2::ggplot(tmp, ggplot2::aes(x = hlevel, y = freq, fill = manip)) +
+    plot_out <- ggplot2::ggplot(tmp, ggplot2::aes(x = x, y = freq, fill = manip)) +
       ggplot2::geom_bar(stat = "identity", width = 0.1, colour = "darkgray",
                         position = ggplot2::position_nudge(x = +0.05)) +
       ggplot2::geom_line(ggplot2::aes(y = pred, fill = NULL),
@@ -246,7 +246,7 @@
       ggplot2::geom_vline(xintercept = cutoff, linetype = 2) +
       ggplot2::theme_classic() +
       ggplot2::labs(x = "Running variable", y = "Count") +
-      ggplot2::xlim(range(hist_df$hlevel))
+      ggplot2::xlim(range(hist_df$x))
   }
 
   list(

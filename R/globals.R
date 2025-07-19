@@ -12,9 +12,9 @@
 utils::globalVariables(
   c(
     # ggplot2 / dplyr column‑name tokens ---------------------------------
-    "hlevel", "freq", "Freq", "manip", "pred", "avg.prop",
+    "x", "freq", "Freq", "manip", "pred", "avg.prop",
     "leftLine", "rightLine", "right.upr", "right.lwr",
-    "numTrueSubjects", "h.level", "lr", "size", "fill"
+    "numTrueSubjects", "lr", "size", "fill"
   )
 )
 

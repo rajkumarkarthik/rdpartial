@@ -95,7 +95,7 @@ bootstrap_bounds <- function(data, running_var, outcome, treatment = NULL,
   rv_full <- data[[running_var]]
   # Density estimation on original sample ------------------------------
   hist_df <- as.data.frame(table(rv_full))
-  names(hist_df) <- c("hlevel", "freq")
+  names(hist_df) <- c("x", "freq")
   hist_df$hlevel <- as.numeric(as.character(hist_df$hlevel))
 
   density_list <- lapply(manip_regions, function(rg) {

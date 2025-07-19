@@ -21,7 +21,7 @@
 )
 }
 \arguments{
-\item{hist_df}{\code{data.frame} with columns \code{hlevel} (numeric support points)
+\item{hist_df}{\code{data.frame} with columns \code{x} (numeric support points)
 and \code{freq} (integer counts).}
 
 \item{manip_region}{Numeric length‑2 vector giving the suspected manipulation
@@ -66,7 +66,7 @@ final fit.}
 \value{
 A list with components:
 \itemize{
-\item \code{counts}       – \code{data.frame(hlevel, n_true)} within \code{manip_region}.
+\item \code{counts}       – \code{data.frame(x, n_true)} within \code{manip_region}.
 \item \code{avg_cv_sse}   – cross‑validated SSE (per bin) for the chosen model.
 \item \code{avg_sse}      – in‑sample SSE outside \code{manip_region}.
 \item \code{knots}        – optimal knot count.
