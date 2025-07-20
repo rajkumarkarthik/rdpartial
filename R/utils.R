@@ -18,6 +18,8 @@
 #' @param x   Object to test.
 #' @param nm  Character name used in the error message.
 #' @keywords internal
+#' @importFrom stats model.matrix
+#' @importFrom utils modifyList
 .assert_scalar_numeric <- function(x, nm = deparse(substitute(x))) {
   if (!is.numeric(x) || length(x) != 1L || is.na(x)) {
     stop(sprintf("`%s` must be a single, non‑NA numeric value.", nm), call. = FALSE)

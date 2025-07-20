@@ -67,7 +67,11 @@ y0     <- 0.2 * x + rnorm(n)
 y1     <- y0 + 2
 y      <- ifelse(z == 1, y1, y0)
 
-tc <- data.frame(x = cutoff:max(x), n_true = round(tabulate(x[x >= cutoff] + 1) * 0.85))
+freq <- table(factor(x[x >= cutoff], levels = cutoff:max(x)))
+tc   <- data.frame(
+  x      = as.integer(names(freq)),
+  n_true = round(as.vector(freq) * 0.85)
+)
 
 bounds_fuzzy(x, y, z, cutoff, true_counts = tc)
 

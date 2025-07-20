@@ -34,14 +34,21 @@
 #' y1     <- y0 + 2
 #' y      <- ifelse(z == 1, y1, y0)
 #'
-#' tc <- data.frame(x = cutoff:max(x), n_true = round(tabulate(x[x >= cutoff] + 1) * 0.85))
+#' freq <- table(factor(x[x >= cutoff], levels = cutoff:max(x)))
+#' tc   <- data.frame(
+#'   x      = as.integer(names(freq)),
+#'   n_true = round(as.vector(freq) * 0.85)
+#' )
 #'
 #' bounds_fuzzy(x, y, z, cutoff, true_counts = tc)
 #'
 #' @importFrom stats lm.wfit
 #' @importFrom CVXR Variable Maximize Minimize Problem solve sum_entries
 # -----------------------------------------------------------------------------
-bounds_fuzzy <- function(x, y, z, cutoff,
+bounds_fuzzy <- function(x,
+                         y,
+                         z,
+                         cutoff,
                          true_counts,
                          weights = NULL,
                          poly_order = 1L,
@@ -50,17 +57,24 @@ bounds_fuzzy <- function(x, y, z, cutoff,
                          solver = getOption("rdpartial.solver", "ECOS"),
                          ...) {
   # ---- checks ---------------------------------------------------------------
-  stopifnot(is.numeric(x), is.numeric(y), is.numeric(z),
-            length(x) == length(y), length(x) == length(z))
+  stopifnot(
+    is.numeric(x),
+    is.numeric(y),
+    is.numeric(z),
+    length(x) == length(y),
+    length(x) == length(z)
+  )
   .assert_scalar_numeric(cutoff, "cutoff")
 
   if (is.null(weights)) {
     weights <- rep(1, length(x))
   } else {
-    if (any(is.na(weights))) weights[is.na(weights)] <- 0
+    if (any(is.na(weights)))
+      weights[is.na(weights)] <- 0
     tiny_neg <- weights < 0 & weights > -sqrt(.Machine$double.eps)
     weights[tiny_neg] <- 0
-    stopifnot(is.numeric(weights), length(weights) == length(x),
+    stopifnot(is.numeric(weights),
+              length(weights) == length(x),
               all(weights >= 0))
   }
 
@@ -73,11 +87,13 @@ bounds_fuzzy <- function(x, y, z, cutoff,
   # ---- split sample ---------------------------------------------------------
   left  <- x <  cutoff
   right <- x >= cutoff
-  if (!any(left))  stop("No observations to the left of the cutoff.",  call. = FALSE)
-  if (!any(right)) stop("No observations to the right of the cutoff.", call. = FALSE)
+  if (!any(left))
+    stop("No observations to the left of the cutoff.", call. = FALSE)
+  if (!any(right))
+    stop("No observations to the right of the cutoff.", call. = FALSE)
 
   # ---- design matrices ------------------------------------------------------
-  Xl <- .poly_design(x[left],  poly_order)
+  Xl <- .poly_design(x[left], poly_order)
   Xr <- .poly_design(x[right], poly_order)
   c_star <- .poly_design(cutoff, poly_order)[1, ]
 
@@ -95,10 +111,12 @@ bounds_fuzzy <- function(x, y, z, cutoff,
   uniq_r  <- sort(unique(xr_vals))
   n_true  <- true_counts$n_true[match(uniq_r, true_counts$x)]
   if (anyNA(n_true))
-    stop("`true_counts` missing some support points present in data.", call. = FALSE)
+    stop("`true_counts` missing some support points present in data.",
+         call. = FALSE)
 
   H <- matrix(0, nrow = length(uniq_r), ncol = length(xr_vals))
-  for (j in seq_along(uniq_r)) H[j, xr_vals == uniq_r[j]] <- 1
+  for (j in seq_along(uniq_r))
+    H[j, xr_vals == uniq_r[j]] <- 1
 
   # ---- phi terms ------------------------------------------------------------
   phi_inv_c <- Xr %*% solve(t(Xr) %*% (Xr * Wr)) %*% c_star
@@ -113,7 +131,8 @@ bounds_fuzzy <- function(x, y, z, cutoff,
     obj_up   <- CVXR::Maximize(sum(b_num * y_var) - left_num * z_var)
     obj_low  <- CVXR::Minimize(sum(b_num * y_var) - left_num * z_var)
     denom_eq <- sum(b_den * y_var) - left_den * z_var == 1
-  } else {  # "decrease" – sign flips
+  } else {
+    # "decrease" – sign flips
     obj_up   <- CVXR::Maximize(-sum(b_num * y_var) + left_num * z_var)
     obj_low  <- CVXR::Minimize(-sum(b_num * y_var) + left_num * z_var)
     denom_eq <- -sum(b_den * y_var) + left_den * z_var == 1
@@ -122,23 +141,29 @@ bounds_fuzzy <- function(x, y, z, cutoff,
   constr <- list(z_var >= 0,
                  H %*% y_var == n_true * z_var,
                  denom_eq,
-                 0 <= y_var, y_var <= z_var)
+                 0 <= y_var,
+                 y_var <= z_var)
 
   out <- c(lower = NA_real_, upper = NA_real_)
   cvx_opts <- modifyList(getOption("rdpartial.cvx_opts", list()), list(...))
 
   # ---- optimisation ---------------------------------------------------------
   if (bounds != "upper") {
-    sol_low <- CVXR::solve(CVXR::Problem(obj_low, constr), solver = solver, .opts = cvx_opts)
+    sol_low <- CVXR::solve(CVXR::Problem(obj_low, constr),
+                           solver = solver,
+                           .opts = cvx_opts)
     out["lower"] <- sol_low$value
     attr(out, "opt_lwr") <- sol_low
   }
   if (bounds != "lower") {
-    sol_up  <- CVXR::solve(CVXR::Problem(obj_up, constr),  solver = solver, .opts = cvx_opts)
+    sol_up  <- CVXR::solve(CVXR::Problem(obj_up, constr),
+                           solver = solver,
+                           .opts = cvx_opts)
     out["upper"] <- sol_up$value
     attr(out, "opt_upr") <- sol_up
   }
 
-  if (bounds != "both") return(out[[bounds]])
+  if (bounds != "both")
+    return(out[[bounds]])
   out
 }
