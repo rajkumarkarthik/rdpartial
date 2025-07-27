@@ -84,6 +84,9 @@ bounds_fuzzy <- function(x,
   .check_columns(true_counts, c("x", "n_true"))
   stopifnot(all(true_counts$x >= cutoff))
 
+  if(treat_direction == 'decrease')
+    z <- 1 - z
+
   # ---- split sample ---------------------------------------------------------
   left  <- x <  cutoff
   right <- x >= cutoff
@@ -114,12 +117,17 @@ bounds_fuzzy <- function(x,
     stop("`true_counts` missing some support points present in data.",
          call. = FALSE)
 
+  wStar <- rep(1, length(xr_vals))
   H <- matrix(0, nrow = length(uniq_r), ncol = length(xr_vals))
-  for (j in seq_along(uniq_r))
+  for (j in seq_along(uniq_r)) {
     H[j, xr_vals == uniq_r[j]] <- 1
+    wStar[xr_vals == uniq_r[j]] <- c(rep(1, n_true[j]),
+                                     rep(0, sum(xr_vals == uniq_r[j]) - n_true[j]))
+  }
+
 
   # ---- phi terms ------------------------------------------------------------
-  phi_inv_c <- Xr %*% solve(t(Xr) %*% (Xr * Wr)) %*% c_star
+  phi_inv_c <- Xr %*% solve(t(Xr) %*% (Xr * (Wr * wStar))) %*% c_star
   b_num   <- as.vector(y[right] * Wr * phi_inv_c)
   b_den   <- as.vector(z[right] * Wr * phi_inv_c)
 
