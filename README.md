@@ -45,7 +45,7 @@ bounds_sharp(sim$x, sim$y, cutoff = 16, true_counts = true_counts)
 
 ## Acknowledgments
 
-Development of this package was assisted by OpenAI's ChatGPT (GPT-4) for code optimization and documentation refinement. All algorithmic design, mathematical implementation, and scientific validation remain the work of the authors.
+Development of this package was assisted by OpenAI's ChatGPT o3 model and Anthropic's Claude 4 Sonnet model for code optimization and documentation refinement. All algorithmic design, mathematical implementation, and scientific validation remain the work of the authors.
 
 ## License
 
