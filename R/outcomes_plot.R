@@ -100,7 +100,6 @@ outcomes_plot <- function(prop,
   )
 
   # ---- build plot -----------------------------------------------------------
-  browser()
   m <- ggplot2::ggplot(prop, ggplot2::aes(x = h.level, y = avg.prop)) +
     ggplot2::geom_point(ggplot2::aes(size = numTrueSubjects),
                         colour = 'black', fill = 'gray', shape = 21) +

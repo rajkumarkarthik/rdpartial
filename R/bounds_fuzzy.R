@@ -55,7 +55,7 @@ bounds_fuzzy <- function(x,
                          bounds = c("both", "lower", "upper"),
                          treat_direction = c("increase", "decrease"),
                          solver = getOption("rdpartial.solver", "ECOS"),
-                         runVarPlot = FALSE,
+                         runVarPlots = FALSE,
                          ylab = NULL,
                          xlab = NULL,
                          ...) {
@@ -175,7 +175,7 @@ bounds_fuzzy <- function(x,
   }
 
   # make the running variable plot
-  if(runVarPlot) {
+  if(runVarPlots) {
 
     # get the weights
     upperWeights <- sol_up$getValue(y_var) / sol_up$getValue(z_var)
@@ -200,8 +200,8 @@ bounds_fuzzy <- function(x,
     names(true_counts) <- c("hlevel", "numTrueSubjects")
 
     # generate the outcomes plot
-    outcomes_plot(
-      prop          = prop.y,       # <-- you must have built this earlier in bounds_fuzzy
+    yPlot <- outcomes_plot(
+      prop          = prop.y,
       xl            = x[left],
       Yl            = y[left],
       xr            = x[right],
@@ -217,10 +217,33 @@ bounds_fuzzy <- function(x,
       cutoff        = cutoff        # the actual cutoff threshold
     )
 
-
+    # generate the treatments plot
+    zPlot <- outcomes_plot(
+      prop          = prop.z,
+      xl            = x[left],
+      Yl            = z[left],
+      xr            = x[right],
+      Yr            = z[right],
+      upperWeights  = upperWeights, # weights for right‑side upper bound LOESS
+      lowerWeights  = lowerWeights, # weights for right‑side lower bound LOESS
+      ylab          = ylab,
+      xlab          = "Treatment Indicator",
+      title         = "Treatment vs. Hemoglobin Level",
+      order         = poly_order,   # match the polynomial order used earlier
+      hist          = myHist,         # histogram of hemoglobin levels
+      trueCounts    = true_counts,  # data.frame(x, n_true) from the inputs
+      cutoff        = cutoff        # the actual cutoff threshold
+    )
   }
 
-  if (bounds != "both")
-    return(out[[bounds]])
-  out
+  # return bounds
+  if(!runVarPlots) {
+    if (bounds != "both")
+      return(out[[bounds]])
+    out
+  } else {
+    return(list(bounds = out,
+                yPlot = yPlot,
+                zPlot = zPlot))
+  }
 }
