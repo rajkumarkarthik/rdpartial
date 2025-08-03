@@ -50,6 +50,7 @@ outcomes_plot <- function(prop,
                           upperWeights,
                           lowerWeights,
                           ylab,
+                          xlab,
                           title,
                           order,
                           hist,
@@ -104,17 +105,10 @@ outcomes_plot <- function(prop,
     ggplot2::geom_point(ggplot2::aes(size = numTrueSubjects),
                         colour = 'black', fill = 'gray', shape = 21) +
     ggplot2::theme_classic() +
-    ggplot2::theme(text = ggplot2::element_text(size = 20)) +
+    ggplot2::theme(text = ggplot2::element_text(size = 16)) +
     ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5)) +
     ggplot2::labs(size = '# of Non-Manipulators') +
-    ggplot2::ylim(
-      0,
-      ifelse(grepl("Treatment", title), 1,
-             ifelse(grepl("# of Days", ylab),
-                    max(prop$leftLine, na.rm = TRUE) * 1.1,
-                    0.7))
-    ) +
-    ggplot2::labs(y = ylab, x = "Hemoglobin Level (g/dL)") +
+    ggplot2::labs(y = ylab, x = xlab) +
     ggplot2::geom_vline(xintercept = cutoff, lty = 2, col = 'gray') +
     ggplot2::geom_line(ggplot2::aes(x = h.level, y = leftLine,
                                     color = 'Standard Estimate'), lwd = 1.5) +
@@ -127,8 +121,7 @@ outcomes_plot <- function(prop,
     ggplot2::scale_colour_manual("LOESS Fit",
                                  breaks = c("Standard Estimate", "Upper Bound", "Lower Bound"),
                                  values = c("blue", "green", "red")) +
-    ggplot2::ggtitle(title) +
-    ggplot2::xlim(c(8, 17))
+    ggplot2::ggtitle(title)
 
   return(m)
 }

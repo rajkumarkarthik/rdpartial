@@ -57,6 +57,7 @@ bounds_fuzzy <- function(x,
                          solver = getOption("rdpartial.solver", "ECOS"),
                          runVarPlot = FALSE,
                          ylab = NULL,
+                         xlab = NULL,
                          ...) {
   # ---- checks ---------------------------------------------------------------
   stopifnot(
@@ -207,7 +208,8 @@ bounds_fuzzy <- function(x,
       Yr            = y[right],
       upperWeights  = upperWeights, # weights for right‑side upper bound LOESS
       lowerWeights  = lowerWeights, # weights for right‑side lower bound LOESS
-      ylab          = outcome_col,
+      ylab          = ylab,
+      xlab          = xlab,
       title         = "Outcome vs. Hemoglobin Level",
       order         = poly_order,   # match the polynomial order used earlier
       hist          = myHist,         # histogram of hemoglobin levels
