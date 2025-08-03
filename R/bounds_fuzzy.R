@@ -55,6 +55,9 @@ bounds_fuzzy <- function(x,
                          bounds = c("both", "lower", "upper"),
                          treat_direction = c("increase", "decrease"),
                          solver = getOption("rdpartial.solver", "ECOS"),
+                         runVarPlots = FALSE,
+                         ylab = NULL,
+                         xlab = NULL,
                          ...) {
   # ---- checks ---------------------------------------------------------------
   stopifnot(
@@ -171,7 +174,76 @@ bounds_fuzzy <- function(x,
     attr(out, "opt_upr") <- sol_up
   }
 
-  if (bounds != "both")
-    return(out[[bounds]])
-  out
+  # make the running variable plot
+  if(runVarPlots) {
+
+    # get the weights
+    upperWeights <- sol_up$getValue(y_var) / sol_up$getValue(z_var)
+    lowerWeights <- sol_low$getValue(y_var) / sol_low$getValue(z_var)
+
+    # get the proportion at each value of Xr
+    v_y <- tapply(c(y[left], y[right]), c(x[left], x[right]), mean)
+    prop.y <- data.frame(
+      h.level  = as.numeric(names(v_y)),
+      avg.prop = as.numeric(v_y)
+    )
+
+    v_z <- tapply(c(z[left], z[right]), c(x[left], x[right]), mean)
+    prop.z <- data.frame(
+      h.level  = as.numeric(names(v_z)),
+      avg.prop = as.numeric(v_z)
+    )
+
+    # set appropriate names
+    myHist <- data.frame(table(x))
+    names(myHist)[1] <- 'hlevel'
+    names(true_counts) <- c("hlevel", "numTrueSubjects")
+
+    # generate the outcomes plot
+    yPlot <- outcomes_plot(
+      prop          = prop.y,
+      xl            = x[left],
+      Yl            = y[left],
+      xr            = x[right],
+      Yr            = y[right],
+      upperWeights  = upperWeights, # weights for right‑side upper bound LOESS
+      lowerWeights  = lowerWeights, # weights for right‑side lower bound LOESS
+      ylab          = ylab,
+      xlab          = xlab,
+      title         = "Outcome vs. Hemoglobin Level",
+      order         = poly_order,   # match the polynomial order used earlier
+      hist          = myHist,         # histogram of hemoglobin levels
+      trueCounts    = true_counts,  # data.frame(x, n_true) from the inputs
+      cutoff        = cutoff        # the actual cutoff threshold
+    )
+
+    # generate the treatments plot
+    zPlot <- outcomes_plot(
+      prop          = prop.z,
+      xl            = x[left],
+      Yl            = z[left],
+      xr            = x[right],
+      Yr            = z[right],
+      upperWeights  = upperWeights, # weights for right‑side upper bound LOESS
+      lowerWeights  = lowerWeights, # weights for right‑side lower bound LOESS
+      ylab          = ylab,
+      xlab          = "Treatment Indicator",
+      title         = "Treatment vs. Hemoglobin Level",
+      order         = poly_order,   # match the polynomial order used earlier
+      hist          = myHist,         # histogram of hemoglobin levels
+      trueCounts    = true_counts,  # data.frame(x, n_true) from the inputs
+      cutoff        = cutoff        # the actual cutoff threshold
+    )
+  }
+
+  # return bounds
+  if(!runVarPlots) {
+    if (bounds != "both")
+      return(out[[bounds]])
+    out
+  } else {
+    return(list(bounds = out,
+                yPlot = yPlot,
+                zPlot = zPlot))
+  }
 }
