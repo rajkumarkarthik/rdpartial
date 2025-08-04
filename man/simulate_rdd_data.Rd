@@ -24,16 +24,16 @@ simulate_rdd_data(
 \arguments{
 \item{n}{Integer sample size (≥ 1).}
 
-\item{cutoff}{Numeric threshold.  Must be integer‐aligned with the support of
+\item{cutoff}{Numeric threshold.  Must be integer-aligned with the support of
 \code{x}.}
 
 \item{dist}{Either "poisson" (default) or "uniform".}
 
 \item{lambda}{Poisson mean when \code{dist = "poisson"}.}
 
-\item{range}{Integer length‑2 support when \code{dist = "uniform"}.}
+\item{range}{Integer length-2 support when \code{dist = "uniform"}.}
 
-\item{beta}{Numeric length‑3 vector for the quadratic mean of \code{Y(0)}.}
+\item{beta}{Numeric length-3 vector for the quadratic mean of \code{Y(0)}.}
 
 \item{tau}{Constant treatment effect added to \code{Y(1)} (default \code{1}).}
 
@@ -44,7 +44,7 @@ simulate_rdd_data(
 \item{p0, p1}{Treatment probabilities below / above cutoff when
 \code{design = "fuzzy"}.}
 
-\item{manip_width}{Numeric ≥ 0 — interval width subject to manipulation just
+\item{manip_width}{Numeric ≥ 0 - interval width subject to manipulation just
 below the cutoff.}
 
 \item{manip_prob}{Probability of manipulation for units in that interval
@@ -55,21 +55,21 @@ below the cutoff.}
 \value{
 A \code{data.frame} with columns:
 \itemize{
-\item \code{x} – running variable \strong{after} manipulation.
-\item \code{y} – realised outcome.
-\item \code{z} – treatment status.
-\item \code{x_orig} – running variable before manipulation.
-\item \code{manipulated} – logical flag.
+\item \code{x} - running variable \strong{after} manipulation.
+\item \code{y} - realised outcome.
+\item \code{z} - treatment status.
+\item \code{x_orig} - running variable before manipulation.
+\item \code{manipulated} - logical flag.
 }
 
 The object carries attributes:
 \itemize{
-\item \code{ate_cutoff} – true treatment effect at the cutoff (\code{tau}).
-\item \code{call} – original function call.
+\item \code{ate_cutoff} - true treatment effect at the cutoff (\code{tau}).
+\item \code{call} - original function call.
 }
 }
 \description{
-A convenience generator that mirrors the data‐generating processes used in
+A convenience generator that mirrors the data-generating processes used in
 the \strong{rdpartial} documentation and unit tests.  The function produces a
 data frame ready for \code{bounds_sharp()}, \code{bounds_fuzzy()}, and
 \code{bootstrap_bounds()}, while also returning the \emph{true} treatment effect at the
@@ -84,7 +84,7 @@ uniform distribution.
 above the threshold with probability \code{manip_prob}.
 \item Generate potential outcomes \code{Y(0)} and \code{Y(1)} as quadratic functions of
 \code{x} plus Normal noise.
-\item Assign treatment either \emph{sharply} (\verb{z = 1(x ≥ cutoff)}) or \emph{fuzzily} via
+\item Assign treatment either \emph{sharply} (\code{z = 1(x >= cutoff)}) or \emph{fuzzily} via
 Bernoulli probabilities \code{p0}, \code{p1} below / above the cutoff.
 \item Observe realised outcome \code{y = Y(z)}.
 }

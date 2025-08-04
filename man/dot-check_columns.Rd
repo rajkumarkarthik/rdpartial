@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{.check_columns}
 \alias{.check_columns}
-\title{Quick column–presence assertion}
+\title{Quick column-presence assertion}
 \usage{
 .check_columns(df, cols)
 }

@@ -7,13 +7,13 @@
 .tricube(dist)
 }
 \arguments{
-\item{dist}{Numeric vector of \emph{non‑negative} distances.}
+\item{dist}{Numeric vector of \emph{non-negative} distances.}
 }
 \value{
 Numeric vector of the same length, each element in \verb{[0, 1]}.
 }
 \description{
-Implements the weight function \code{(1 - (d / max(d))^3)^3} for non‑negative
+Implements the weight function \code{(1 - (d / max(d))^3)^3} for non-negative
 distances \code{d}, returning \code{1} when \code{d == 0} and tapering smoothly to \code{0} at
 \code{max(d)}.  This mirrors the weight choice in the original research code.
 }

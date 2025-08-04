@@ -1,6 +1,6 @@
 # rdpartial
 
-**⚠️ Alpha Release Notice:** This package is currently in active alpha development. It is not stable and should **NOT** be used for critical work yet. Functionality may change without notice.
+**⚠️ Beta Release Notice:** This package (v0.1.0) is currently in beta. While feature-complete, it may contain bugs and is recommended for testing and evaluation purposes. Please report any issues on GitHub.
 
 `rdpartial` implements the partial identification approach for regression discontinuity designs with possible manipulation of the running variable.  It provides functions for estimating bounds under both sharp and fuzzy designs, utilities for density estimation of the running variable, a simulation generator and a parametric bootstrap helper.
 
@@ -43,6 +43,29 @@ true_counts <- data.frame(
 bounds_sharp(sim$x, sim$y, cutoff = 16, true_counts = true_counts)
 ```
 
-## Credits and disclaimer
+## Citation
 
-This package was developed with partial assistance from OpenAI's ChatGPT language model. The code in this package is provided **"as-is"**, without warranty of any kind, express or implied. Use it at your own risk.
+If you use this package in your research, please cite:
+
+Rosenman, E., Rajkumar, K., Gauriot, R., & Slonim, R. (2025). Donor's Deferral and Return Behavior: Partial Identification from a Regression Discontinuity Design with Manipulation. *arXiv preprint arXiv:1910.02170*.
+
+**BibTeX:**
+```bibtex
+@misc{rosenman2025donorsdeferralreturnbehavior,
+      title={Donor's Deferral and Return Behavior: Partial Identification from a Regression Discontinuity Design with Manipulation}, 
+      author={Evan Rosenman and Karthik Rajkumar and Romain Gauriot and Robert Slonim},
+      year={2025},
+      eprint={1910.02170},
+      archivePrefix={arXiv},
+      primaryClass={stat.ME},
+      url={https://arxiv.org/abs/1910.02170}
+}
+```
+
+## Acknowledgments
+
+Development of this package was assisted by OpenAI's ChatGPT o3 model and Anthropic's Claude 4 Sonnet model for code optimization and documentation refinement. All algorithmic design, mathematical implementation, and scientific validation remain the work of the authors.
+
+## License
+
+This package is provided under the GPL (>= 3) license. See LICENSE for details.

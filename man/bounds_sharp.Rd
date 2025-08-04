@@ -17,6 +17,18 @@ bounds_sharp(
 )
 }
 \arguments{
+\item{x}{Numeric running variable.}
+
+\item{y}{Numeric outcome variable.}
+
+\item{cutoff}{Numeric threshold separating control (< cutoff) from treatment (>= cutoff).}
+
+\item{true_counts}{Data.frame with columns \code{x} (support points >= cutoff) and \code{n_true} (estimated number of non-manipulated observations at each support point).}
+
+\item{weights}{Numeric vector of observation weights (optional).}
+
+\item{poly_order}{Integer polynomial order for local regression (default 1L).}
+
 \item{bounds}{Character – which bound(s) to return; one of
 "both" (default), "lower", "upper".}
 
@@ -47,7 +59,7 @@ design is sharp, no separate \code{z} argument is needed).
 treatment (≥ cutoff).
 \item \strong{\code{true_counts}} – \code{data.frame} with columns \code{x} (support points ≥ cutoff)
 and \code{n_true} (estimated number of \strong{non‑manipulated} observations at each
-support point).  Typically produced by \code{\link[=density_estimation]{density_estimation()}}.
+support point).  Typically produced by \code{\link[=.density_estimation]{.density_estimation()}}.
 }
 }
 
