@@ -1,6 +1,6 @@
 # rdpartial
 
-**⚠️ Beta Release Notice:** This package is currently in beta. While feature-complete, it may contain bugs and is recommended for testing and evaluation purposes. Please report any issues on GitHub.
+**⚠️ Beta Release Notice:** This package (v0.1.0) is currently in beta. While feature-complete, it may contain bugs and is recommended for testing and evaluation purposes. Please report any issues on GitHub.
 
 `rdpartial` implements the partial identification approach for regression discontinuity designs with possible manipulation of the running variable.  It provides functions for estimating bounds under both sharp and fuzzy designs, utilities for density estimation of the running variable, a simulation generator and a parametric bootstrap helper.
 
