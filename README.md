@@ -43,6 +43,25 @@ true_counts <- data.frame(
 bounds_sharp(sim$x, sim$y, cutoff = 16, true_counts = true_counts)
 ```
 
+## Citation
+
+If you use this package in your research, please cite:
+
+Rosenman, E., Rajkumar, K., Gauriot, R., & Slonim, R. (2025). Donor's Deferral and Return Behavior: Partial Identification from a Regression Discontinuity Design with Manipulation. *arXiv preprint arXiv:1910.02170*.
+
+**BibTeX:**
+```bibtex
+@misc{rosenman2025donorsdeferralreturnbehavior,
+      title={Donor's Deferral and Return Behavior: Partial Identification from a Regression Discontinuity Design with Manipulation}, 
+      author={Evan Rosenman and Karthik Rajkumar and Romain Gauriot and Robert Slonim},
+      year={2025},
+      eprint={1910.02170},
+      archivePrefix={arXiv},
+      primaryClass={stat.ME},
+      url={https://arxiv.org/abs/1910.02170}
+}
+```
+
 ## Acknowledgments
 
 Development of this package was assisted by OpenAI's ChatGPT o3 model and Anthropic's Claude 4 Sonnet model for code optimization and documentation refinement. All algorithmic design, mathematical implementation, and scientific validation remain the work of the authors.

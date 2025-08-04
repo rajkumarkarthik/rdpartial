@@ -4,14 +4,17 @@ Version: 0.1.0
 Authors@R: 
     c(
       person(given = "Karthik", family = "Rajkumar", email = "karthikr@alumni.stanford.edu", role = c("aut", "cre")),
-      person(given = "Evan", family = "Rosenman", email = "erosenman@cmc.edu", role = c("aut"))
+      person(given = "Evan", family = "Rosenman", email = "erosenman@cmc.edu", role = c("aut")),
+      person(given = "Romain", family = "Gauriot", role = c("ctb")),
+      person(given = "Robert", family = "Slonim", role = c("ctb"))
     )
 Maintainer: Karthik Rajkumar <karthikr@alumni.stanford.edu>
 Description: Implements the partial identification approach for regression
     discontinuity designs when units may manipulate the running variable.
     Provides functions to estimate bounds for sharp and fuzzy designs,
     utilities for density estimation, simulation helpers and a bootstrap
-    routine for confidence intervals.
+    routine for confidence intervals. Based on methods described in 
+    Rosenman, Rajkumar, Gauriot & Slonim (2025) <arXiv:1910.02170>.
 License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

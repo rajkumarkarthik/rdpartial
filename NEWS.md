@@ -3,6 +3,7 @@
 ## Initial Release
 
 * Initial implementation of partial identification bounds for regression discontinuity designs with possible manipulation of the running variable
+* Implements methods described in Rosenman, Rajkumar, Gauriot & Slonim (2025) <arXiv:1910.02170>
 
 ### Main Functions
 

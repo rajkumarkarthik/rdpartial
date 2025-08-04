@@ -1,0 +1,39 @@
+citHeader("To cite rdpartial in publications use:")
+
+citEntry(
+  entry    = "Misc",
+  title    = "Donor's Deferral and Return Behavior: Partial Identification from a Regression Discontinuity Design with Manipulation",
+  author   = c(person("Evan", "Rosenman"), 
+               person("Karthik", "Rajkumar"),
+               person("Romain", "Gauriot"),
+               person("Robert", "Slonim")),
+  year     = "2025",
+  eprint   = "1910.02170",
+  archivePrefix = "arXiv",
+  primaryClass = "stat.ME",
+  url      = "https://arxiv.org/abs/1910.02170",
+  
+  textVersion = paste(
+    "Rosenman, E., Rajkumar, K., Gauriot, R., & Slonim, R. (2025).",
+    "Donor's Deferral and Return Behavior: Partial Identification from a Regression Discontinuity Design with Manipulation.",
+    "arXiv preprint arXiv:1910.02170.",
+    "https://arxiv.org/abs/1910.02170"
+  )
+)
+
+citEntry(
+  entry    = "Manual",
+  title    = "rdpartial: Partial Identification for Manipulated Regression Discontinuity Designs",
+  author   = c(person("Karthik", "Rajkumar"),
+               person("Evan", "Rosenman")),
+  year     = "2024",
+  note     = "R package version 0.1.0",
+  url      = "https://github.com/rajkumarkarthik/rdpartial",
+  
+  textVersion = paste(
+    "Rajkumar, K., Rosenman, E. (2024).",
+    "rdpartial: Partial Identification for Manipulated Regression Discontinuity Designs.",
+    "R package version 0.1.0.",
+    "https://github.com/rajkumarkarthik/rdpartial"
+  )
+)
