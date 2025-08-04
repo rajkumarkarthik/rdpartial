@@ -22,29 +22,29 @@
 #'   `x`.
 #' @param dist Either "poisson" (default) or "uniform".
 #' @param lambda Poisson mean when `dist = "poisson"`.
-#' @param range Integer length‑2 support when `dist = "uniform"`.
-#' @param beta Numeric length‑3 vector for the quadratic mean of `Y(0)`.
+#' @param range Integer length-2 support when `dist = "uniform"`.
+#' @param beta Numeric length-3 vector for the quadratic mean of `Y(0)`.
 #' @param tau Constant treatment effect added to `Y(1)` (default `1`).
 #' @param sigma Error SD for both potential outcomes (default `1`).
 #' @param design "fuzzy" (default) or "sharp".
 #' @param p0,p1 Treatment probabilities below / above cutoff when
 #'   `design = "fuzzy"`.
-#' @param manip_width Numeric ≥ 0 — interval width subject to manipulation just
+#' @param manip_width Numeric ≥ 0 - interval width subject to manipulation just
 #'   below the cutoff.
 #' @param manip_prob Probability of manipulation for units in that interval
 #'   (default `0`).
 #' @param seed Optional integer for reproducibility.
 #'
 #' @return A `data.frame` with columns:
-#' * `x` – running variable **after** manipulation.
-#' * `y` – realised outcome.
-#' * `z` – treatment status.
-#' * `x_orig` – running variable before manipulation.
-#' * `manipulated` – logical flag.
+#' * `x` - running variable **after** manipulation.
+#' * `y` - realised outcome.
+#' * `z` - treatment status.
+#' * `x_orig` - running variable before manipulation.
+#' * `manipulated` - logical flag.
 #'
 #' The object carries attributes:
-#' * `ate_cutoff` – true treatment effect at the cutoff (`tau`).
-#' * `call` – original function call.
+#' * `ate_cutoff` - true treatment effect at the cutoff (`tau`).
+#' * `call` - original function call.
 #'
 #' @export
 #' @examples

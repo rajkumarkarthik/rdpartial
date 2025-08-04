@@ -7,7 +7,7 @@
 #
 # Each helper contains an explicit, minimal roxygen block with
 # `@keywords internal` so that they are picked up by `R CMD check` without
-# creating documentation clutter for end–users.
+# creating documentation clutter for end-users.
 # -----------------------------------------------------------------------------
 
 #' Assert that a scalar is numeric
@@ -22,12 +22,12 @@
 #' @importFrom utils modifyList
 .assert_scalar_numeric <- function(x, nm = deparse(substitute(x))) {
   if (!is.numeric(x) || length(x) != 1L || is.na(x)) {
-    stop(sprintf("`%s` must be a single, non‑NA numeric value.", nm), call. = FALSE)
+    stop(sprintf("`%s` must be a single, non-NA numeric value.", nm), call. = FALSE)
   }
   invisible(TRUE)
 }
 
-#' Quick column–presence assertion
+#' Quick column-presence assertion
 #'
 #' Fails early (and verbosely) if required columns are missing from a data
 #' frame.  Used throughout the package wherever we accept arbitrary user data.
@@ -44,22 +44,22 @@
   invisible(TRUE)
 }
 
-#' Column–intercept polynomial design matrix
+#' Column-intercept polynomial design matrix
 #'
-#' Creates a simple polynomial basis `1, x, x^2, …, x^order` that we use for the
+#' Creates a simple polynomial basis `1, x, x^2, ..., x^order` that we use for the
 #' local polynomial regressions on either side of the RDD cutoff.  The function
 #' purposefully avoids `stats::poly()` because we do *not* want orthogonal
-#' polynomials here—keeping the design untransformed eases interpretation and
+#' polynomials here-keeping the design untransformed eases interpretation and
 #' reproducibility across languages.
 #'
 #' @param x     Numeric vector.
-#' @param order Non‑negative integer; the highest power of `x` to include.
+#' @param order Non-negative integer; the highest power of `x` to include.
 #' @return A numeric matrix with `length(x)` rows and `order + 1` columns.
 #' @keywords internal
 .poly_design <- function(x, order = 1L) {
   .assert_scalar_numeric(order, "order")
   if (order < 0 || order != round(order)) {
-    stop("`order` must be a non‑negative integer.", call. = FALSE)
+    stop("`order` must be a non-negative integer.", call. = FALSE)
   }
   if (!is.numeric(x)) {
     stop("`x` must be numeric.", call. = FALSE)
@@ -76,11 +76,11 @@
 
 #' Truncated tricube kernel weights
 #'
-#' Implements the weight function `(1 - (d / max(d))^3)^3` for non‑negative
+#' Implements the weight function `(1 - (d / max(d))^3)^3` for non-negative
 #' distances `d`, returning `1` when `d == 0` and tapering smoothly to `0` at
 #' `max(d)`.  This mirrors the weight choice in the original research code.
 #'
-#' @param dist Numeric vector of *non‑negative* distances.
+#' @param dist Numeric vector of *non-negative* distances.
 #' @return Numeric vector of the same length, each element in `[0, 1]`.
 #' @keywords internal
 .tricube <- function(dist) {

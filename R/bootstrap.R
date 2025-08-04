@@ -1,44 +1,44 @@
-#' Parametric Bootstrap for Partial‑Identification Bounds
+#' Parametric Bootstrap for Partial-Identification Bounds
 #'
-#' Draw repeated resamples of the original data **keeping the running‑variable
-#' distribution fixed** and re‑estimate the sharp or fuzzy RDD bounds for each
-#' user‑specified manipulation region.
+#' Draw repeated resamples of the original data **keeping the running-variable
+#' distribution fixed** and re-estimate the sharp or fuzzy RDD bounds for each
+#' user-specified manipulation region.
 #'
-#' This function is a high‑level wrapper around three internal work‑horses:
-#' * `.density_estimation()` – estimates non‑manipulated counts (`true_counts`).
-#' * [bounds_sharp()] / [bounds_fuzzy()] – compute the Manski bounds.
-#' * `.tricube()` – constructs local‑kernel weights used inside the bounds
+#' This function is a high-level wrapper around three internal work-horses:
+#' * `.density_estimation()` - estimates non-manipulated counts (`true_counts`).
+#' * [bounds_sharp()] / [bounds_fuzzy()] - compute the Manski bounds.
+#' * `.tricube()` - constructs local-kernel weights used inside the bounds
 #'   estimators.
 #'
-#' @param data A `data.frame` that contains the running variable, outcome and—
-#'   for fuzzy designs—the treatment column.
+#' @param data A `data.frame` that contains the running variable, outcome and-
+#'   for fuzzy designs-the treatment column.
 #' @param running_var,outcome Character names of the running variable and
 #'   outcome columns.
-#' @param treatment Character name of the treatment take‑up column (0/1).
+#' @param treatment Character name of the treatment take-up column (0/1).
 #'   Required when `estimator = "fuzzy"`.
 #' @param cutoff Numeric RDD threshold.
-#' @param manip_regions List of numeric length‑2 vectors `(lower, upper)` giving
+#' @param manip_regions List of numeric length-2 vectors `(lower, upper)` giving
 #'   suspected manipulation intervals.
 #' @param estimator Either "fuzzy" (default) or "sharp".
 #' @param n_boot Integer number of bootstrap replications (default `200`).
 #' @param poly_order Local polynomial order (default `1`).
-#' @param weight_var Optional character column in `data` holding non‑negative
+#' @param weight_var Optional character column in `data` holding non-negative
 #'   observation weights.  If `NULL`, each row receives weight 1.
 #' @param density_args Optional named list forwarded to `.density_estimation()`.
 #' @param ci_level Percentile coverage of the bootstrap interval (default
 #'   `0.95`).
 #' @param parallel Logical.  If `TRUE`, uses `parallel::mclapply()` on
-#'   non‑Windows systems.
+#'   non-Windows systems.
 #' @param n_cores Number of cores for parallel execution (defaults to
 #'   `parallel::detectCores() - 1`).
-#' @param progress Logical – print a progress bar (default `TRUE`).  Progress is
+#' @param progress Logical - print a progress bar (default `TRUE`).  Progress is
 #'   suppressed automatically when running in parallel to avoid garbled output.
 #' @param seed Optional integer for reproducibility of resampling.
 #'
-#' @return An object of class `rdpartial_boot` – a list with elements
-#' * `boot_array` – 3‑D array `(n_boot, R, 2)` storing lower/upper bounds.
-#' * `ci`         – `R × 2` matrix of percentile intervals (`lwr`, `upr`).
-#' * `manip_regions`, `estimator`, `call` – metadata for downstream methods.
+#' @return An object of class `rdpartial_boot` - a list with elements
+#' * `boot_array` - 3-D array `(n_boot, R, 2)` storing lower/upper bounds.
+#' * `ci`         - `R × 2` matrix of percentile intervals (`lwr`, `upr`).
+#' * `manip_regions`, `estimator`, `call` - metadata for downstream methods.
 #'
 #' @export
 #' @examples
@@ -78,12 +78,12 @@ bootstrap_bounds <- function(data, running_var, outcome, treatment = NULL,
 
   if (!is.list(manip_regions) ||
       !all(vapply(manip_regions, length, 1L) == 2)) {
-    stop("`manip_regions` must be a list of length‑2 numeric vectors.")
+    stop("`manip_regions` must be a list of length-2 numeric vectors.")
   }
 
   if (!is.null(seed)) set.seed(seed)
 
-  # User‑supplied observation weights ---------------------------------------
+  # User-supplied observation weights ---------------------------------------
   user_wts <- if (is.null(weight_var)) rep(1, nrow(data)) else {
     .check_columns(data, weight_var)
     w <- data[[weight_var]]
@@ -100,7 +100,7 @@ bootstrap_bounds <- function(data, running_var, outcome, treatment = NULL,
   hist_df$x <- as.numeric(as.character(hist_df$x))
 
   density_list <- lapply(manip_regions, function(rg) {
-    do.call(rdpartial:::.density_estimation,
+    do.call(.density_estimation,
             c(list(hist_df = hist_df, manip_region = rg, cutoff = cutoff),
               density_args))
   })
@@ -129,7 +129,7 @@ bootstrap_bounds <- function(data, running_var, outcome, treatment = NULL,
     if (any(left))  wt_kernel[left]  <- .tricube(cutoff - rv[left])
     if (any(right)) wt_kernel[right] <- .tricube(rv[right] - cutoff)
 
-    row_idx <- as.integer(sub("\\..*$", "", rownames(df)))  # strip ".1", ".2", …
+    row_idx <- as.integer(sub("\\..*$", "", rownames(df)))  # strip ".1", ".2", ...
     weights_vec <- wt_kernel * user_wts[row_idx]
     weights_vec <- .sanitize_weights(weights_vec)
 

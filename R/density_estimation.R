@@ -1,40 +1,40 @@
-#' Estimate the number of *non‑manipulated* observations to the right of the cutoff
+#' Estimate the number of *non-manipulated* observations to the right of the cutoff
 #'
-#' This helper replicates the constrained Poisson‑spline procedure from the
-#' research code (Rosenman *et al.*, 2025) but in a package‑friendly, testable
-#' format.  It is **not exported** – downstream functions access it internally
-#' via `rdpartial:::.density_estimation()`.
+#' This helper replicates the constrained Poisson-spline procedure from the
+#' research code (Rosenman *et al.*, 2025) but in a package-friendly, testable
+#' format.  It is **not exported** - downstream functions access it internally
+#' via `.density_estimation()`.
 #'
 #' @details
-#' The algorithm treats the running‑variable histogram as the realisation of a
-#' Poisson process.  A flexible B‑spline (possibly augmented with indicator
-#' spikes at integer or half‑integer values) is fit to the *donut* region –
-#' bins outside the user‑supplied manipulation interval.  Mass preservation and
+#' The algorithm treats the running-variable histogram as the realisation of a
+#' Poisson process.  A flexible B-spline (possibly augmented with indicator
+#' spikes at integer or half-integer values) is fit to the *donut* region -
+#' bins outside the user-supplied manipulation interval.  Mass preservation and
 #' continuity constraints are imposed through `CVXR`, and the optimal number of
-#' knots / spike structure is chosen by $K$‑fold cross‑validation.  The final
+#' knots / spike structure is chosen by $K$-fold cross-validation.  The final
 #' step predicts the expected counts in the manipulation interval, which serve
-#' as the "true" (non‑manipulated) totals fed into the partial‑bounds
+#' as the "true" (non-manipulated) totals fed into the partial-bounds
 #' estimators.  Bins with zero counts receive a tiny offset before logging so
 #' that the inequality constraints remain finite.
 #'
 #' @param hist_df `data.frame` with columns `x` (numeric support points)
 #'   and `freq` (integer counts).
-#' @param manip_region Numeric length‑2 vector giving the suspected manipulation
+#' @param manip_region Numeric length-2 vector giving the suspected manipulation
 #'   interval *(lower, upper)* **inclusive**.  Must contain the cutoff on its
 #'   **upper** bound.
-#' @param cutoff Numeric scalar – RDD threshold.
+#' @param cutoff Numeric scalar - RDD threshold.
 #' @param knot_options Integer vector of candidate spline knot counts;
 #'   default `3:15`.
 #' @param mod_types Character vector specifying which model structures to
-#'   cross‑validate over.  Allowed values are:
-#'   * "smooth" – plain spline;
-#'   * "spike_integer" – spline + indicator for integer spikes;
-#'   * "spike_half" – spline + integer + half‑integer spikes.
+#'   cross-validate over.  Allowed values are:
+#'   * "smooth" - plain spline;
+#'   * "spike_integer" - spline + indicator for integer spikes;
+#'   * "spike_half" - spline + integer + half-integer spikes.
 #' @param lambda Penalty weight on total predicted mass inside the manipulation
 #'   region (higher ⇒ stricter mass match).  Default `100` (paper default).
 #' @param eps Numeric slack for the CVXR continuity constraints (default `1e-6`).
 #' @param folds Optional integer vector assigning each *donut* bin to a CV fold.
-#'   Length must equal `nrow(hist_df)`.  When `NULL`, a random `num_folds`‑way
+#'   Length must equal `nrow(hist_df)`.  When `NULL`, a random `num_folds`-way
 #'   split is generated.
 #' @param num_folds Integer number of folds if `folds` is `NULL` (default `5`).
 #' @param make_plot Logical; if `TRUE` return a `ggplot2` object visualising the
@@ -46,12 +46,12 @@
 #'   `.get_rdpartial_opt("cvx_opts")`.
 #'
 #' @return A list with components:
-#' * `counts`       – `data.frame(x, n_true)` within `manip_region`.
-#' * `avg_cv_sse`   – cross‑validated SSE (per bin) for the chosen model.
-#' * `avg_sse`      – in‑sample SSE outside `manip_region`.
-#' * `knots`        – optimal knot count.
-#' * `model`        – optimal model type (one of `mod_types`).
-#' * `plot`         – `ggplot` object when `make_plot = TRUE`.
+#' * `counts`       - `data.frame(x, n_true)` within `manip_region`.
+#' * `avg_cv_sse`   - cross-validated SSE (per bin) for the chosen model.
+#' * `avg_sse`      - in-sample SSE outside `manip_region`.
+#' * `knots`        - optimal knot count.
+#' * `model`        - optimal model type (one of `mod_types`).
+#' * `plot`         - `ggplot` object when `make_plot = TRUE`.
 #'
 #' @keywords internal
 #' @importFrom stats glm poisson constrOptim quantile
@@ -70,7 +70,7 @@
   # ---- sanity checks -------------------------------------------------------
   .check_columns(hist_df, c("x", "freq"))
   stopifnot(is.numeric(hist_df$x), is.numeric(hist_df$freq))
-  if (any(hist_df$freq < 0)) stop("`freq` must be non‑negative.", call. = FALSE)
+  if (any(hist_df$freq < 0)) stop("`freq` must be non-negative.", call. = FALSE)
 
   if (!is.null(seed)) set.seed(seed)
   .assert_scalar_numeric(cutoff, "cutoff")
