@@ -15,6 +15,9 @@ bounds_fuzzy(
   bounds = c("both", "lower", "upper"),
   treat_direction = c("increase", "decrease"),
   solver = getOption("rdpartial.solver", "ECOS"),
+  runVarPlots = FALSE,
+  ylab = NULL,
+  xlab = NULL,
   ...
 )
 }
