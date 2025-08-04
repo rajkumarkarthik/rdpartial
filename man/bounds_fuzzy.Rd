@@ -22,20 +22,35 @@ bounds_fuzzy(
 )
 }
 \arguments{
+\item{x}{Numeric running variable.}
+
+\item{y}{Numeric outcome variable.}
+
 \item{z}{Numeric vector (0/1) – treatment take‑up.}
 
-\item{bounds}{Character – which bound(s) to return; one of
-"both" (default), "lower", "upper".}
+\item{cutoff}{Numeric threshold separating control (< cutoff) from treatment (>= cutoff).}
+
+\item{true_counts}{Data.frame with columns \code{x} (support points >= cutoff) and \code{n_true} (estimated number of non-manipulated observations at each support point).}
+
+\item{weights}{Numeric vector of observation weights (optional).}
+
+\item{poly_order}{Integer polynomial order for local regression (default 1L).}
+
+\item{bounds}{Character – which bound(s) to return; one of "both" (default), "lower", "upper".}
 
 \item{treat_direction}{Either "increase" (treatment prob. jumps \emph{up} at the
 cutoff – standard case) or "decrease" (jumps \emph{down}, e.g. donor \emph{deferral}
 example).  Determines the sign of the optimisation objective.}
 
-\item{solver}{Character – CVXR solver (default taken from
-\code{getOption("rdpartial.solver")}; package default is "ECOS").}
+\item{solver}{Character – CVXR solver (default taken from \code{getOption("rdpartial.solver")}; package default is "ECOS").}
 
-\item{...}{Further arguments passed on to \code{\link[CVXR:psolve]{CVXR::solve()}}.  Use this to
-override CVXR tolerances or provide a different solver control list.}
+\item{runVarPlots}{Logical. If TRUE, generate running variable plots showing outcomes and treatment probabilities.}
+
+\item{ylab}{Character. Label for the y-axis in plots.}
+
+\item{xlab}{Character. Label for the x-axis in plots.}
+
+\item{...}{Further arguments passed on to \code{\link[CVXR:psolve]{CVXR::solve()}}. Use this to override CVXR tolerances or provide a different solver control list.}
 }
 \value{
 Numeric vector of length 2 (\code{lower}, \code{upper}) when \code{bounds = "both"};
@@ -47,7 +62,7 @@ Extension of \code{\link[=bounds_sharp]{bounds_sharp()}} to \emph{fuzzy} designs
 jumps (up \strong{or} down) at the cutoff but is not deterministic.  The estimator
 solves a linear‑fractional programme as described in Rosenman \emph{et al.} (2025)
 using \code{CVXR}.  Manipulation to the right of the cutoff is bounded by
-\code{true_counts} obtained from \code{\link[=density_estimation]{density_estimation()}}.
+\code{true_counts} obtained from \code{\link[=.density_estimation]{.density_estimation()}}.
 }
 \section{Required Inputs}{
 

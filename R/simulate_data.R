@@ -1,6 +1,6 @@
 #' Simulate Synthetic Data for Sharp or Fuzzy RDD Examples
 #'
-#' A convenience generator that mirrors the data‐generating processes used in
+#' A convenience generator that mirrors the data-generating processes used in
 #' the **rdpartial** documentation and unit tests.  The function produces a
 #' data frame ready for `bounds_sharp()`, `bounds_fuzzy()`, and
 #' `bootstrap_bounds()`, while also returning the *true* treatment effect at the
@@ -13,12 +13,12 @@
 #'    above the threshold with probability `manip_prob`.
 #' 3. Generate potential outcomes `Y(0)` and `Y(1)` as quadratic functions of
 #'    `x` plus Normal noise.
-#' 4. Assign treatment either *sharply* (`z = 1(x ≥ cutoff)`) or *fuzzily* via
+#' 4. Assign treatment either *sharply* (`z = 1(x >= cutoff)`) or *fuzzily* via
 #'    Bernoulli probabilities `p0`, `p1` below / above the cutoff.
 #' 5. Observe realised outcome `y = Y(z)`.
 #'
 #' @param n Integer sample size (≥ 1).
-#' @param cutoff Numeric threshold.  Must be integer‐aligned with the support of
+#' @param cutoff Numeric threshold.  Must be integer-aligned with the support of
 #'   `x`.
 #' @param dist Either "poisson" (default) or "uniform".
 #' @param lambda Poisson mean when `dist = "poisson"`.
@@ -69,7 +69,7 @@ simulate_rdd_data <- function(n = 4000, cutoff = 16,
   design <- match.arg(design)
   if (length(beta) != 3) stop("`beta` must be length 3.", call. = FALSE)
   if (manip_width < 0 || manip_prob < 0 || manip_prob > 1)
-    stop("`manip_width` must be ≥0 and `manip_prob` in [0,1].", call. = FALSE)
+    stop("`manip_width` must be >= 0 and `manip_prob` in [0,1].", call. = FALSE)
 
   # ---- running variable -----------------------------------------------------
   x_raw <- switch(dist,

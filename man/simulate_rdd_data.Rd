@@ -24,7 +24,7 @@ simulate_rdd_data(
 \arguments{
 \item{n}{Integer sample size (≥ 1).}
 
-\item{cutoff}{Numeric threshold.  Must be integer‐aligned with the support of
+\item{cutoff}{Numeric threshold.  Must be integer-aligned with the support of
 \code{x}.}
 
 \item{dist}{Either "poisson" (default) or "uniform".}
@@ -69,7 +69,7 @@ The object carries attributes:
 }
 }
 \description{
-A convenience generator that mirrors the data‐generating processes used in
+A convenience generator that mirrors the data-generating processes used in
 the \strong{rdpartial} documentation and unit tests.  The function produces a
 data frame ready for \code{bounds_sharp()}, \code{bounds_fuzzy()}, and
 \code{bootstrap_bounds()}, while also returning the \emph{true} treatment effect at the
@@ -84,7 +84,7 @@ uniform distribution.
 above the threshold with probability \code{manip_prob}.
 \item Generate potential outcomes \code{Y(0)} and \code{Y(1)} as quadratic functions of
 \code{x} plus Normal noise.
-\item Assign treatment either \emph{sharply} (\verb{z = 1(x ≥ cutoff)}) or \emph{fuzzily} via
+\item Assign treatment either \emph{sharply} (\code{z = 1(x >= cutoff)}) or \emph{fuzzily} via
 Bernoulli probabilities \code{p0}, \code{p1} below / above the cutoff.
 \item Observe realised outcome \code{y = Y(z)}.
 }

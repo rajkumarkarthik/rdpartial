@@ -20,6 +20,7 @@
 #' @param upperWeights Numeric vector of weights for the upper bound LOESS.
 #' @param lowerWeights Numeric vector of weights for the lower bound LOESS.
 #' @param ylab Character. Label for the y-axis.
+#' @param xlab Character. Label for the x-axis.
 #' @param title Character. Plot title.
 #' @param order Integer. Degree of LOESS polynomial (1 = linear, 2 = quadratic).
 #' @param hist Data.frame with histogram counts (`x_value`, `Freq`).
@@ -40,6 +41,7 @@
 #'
 #' @import ggplot2
 #' @importFrom dplyr coalesce
+#' @importFrom stats predict loess loess.control
 #' @export
 # -----------------------------------------------------------------------------
 outcomes_plot <- function(prop,

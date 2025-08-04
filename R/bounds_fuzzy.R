@@ -4,7 +4,7 @@
 #' jumps (up **or** down) at the cutoff but is not deterministic.  The estimator
 #' solves a linear‑fractional programme as described in Rosenman *et al.* (2025)
 #' using `CVXR`.  Manipulation to the right of the cutoff is bounded by
-#' `true_counts` obtained from [density_estimation()].
+#' `true_counts` obtained from [.density_estimation()].
 #'
 #' @section Required Inputs:
 #' * **`x`** – running variable.
@@ -13,11 +13,22 @@
 #' * **`cutoff`** – threshold.
 #' * **`true_counts`** – `data.frame(x, n_true)` of non‑manipulated counts.
 #'
-#' @inheritParams bounds_sharp
+#' @param x Numeric running variable.
+#' @param y Numeric outcome variable.
 #' @param z Numeric vector (0/1) – treatment take‑up.
+#' @param cutoff Numeric threshold separating control (< cutoff) from treatment (>= cutoff).
+#' @param true_counts Data.frame with columns `x` (support points >= cutoff) and `n_true` (estimated number of non-manipulated observations at each support point).
+#' @param weights Numeric vector of observation weights (optional).
+#' @param poly_order Integer polynomial order for local regression (default 1L).
+#' @param bounds Character – which bound(s) to return; one of "both" (default), "lower", "upper".
 #' @param treat_direction Either "increase" (treatment prob. jumps *up* at the
 #'   cutoff – standard case) or "decrease" (jumps *down*, e.g. donor *deferral*
 #'   example).  Determines the sign of the optimisation objective.
+#' @param solver Character – CVXR solver (default taken from `getOption("rdpartial.solver")`; package default is "ECOS").
+#' @param runVarPlots Logical. If TRUE, generate running variable plots showing outcomes and treatment probabilities.
+#' @param ylab Character. Label for the y-axis in plots.
+#' @param xlab Character. Label for the x-axis in plots.
+#' @param ... Further arguments passed on to [CVXR::solve()]. Use this to override CVXR tolerances or provide a different solver control list.
 #'
 #' @return Numeric vector of length 2 (`lower`, `upper`) when `bounds = "both"`;
 #'   otherwise a single numeric.  CVXR solutions attached as attributes

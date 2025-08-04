@@ -14,9 +14,14 @@
 #'   treatment (≥ cutoff).
 #' * **`true_counts`** – `data.frame` with columns `x` (support points ≥ cutoff)
 #'   and `n_true` (estimated number of **non‑manipulated** observations at each
-#'   support point).  Typically produced by [density_estimation()].
+#'   support point).  Typically produced by [.density_estimation()].
 #'
-#' @inheritParams bounds_fuzzy
+#' @param x Numeric running variable.
+#' @param y Numeric outcome variable.
+#' @param cutoff Numeric threshold separating control (< cutoff) from treatment (>= cutoff).
+#' @param true_counts Data.frame with columns `x` (support points >= cutoff) and `n_true` (estimated number of non-manipulated observations at each support point).
+#' @param weights Numeric vector of observation weights (optional).
+#' @param poly_order Integer polynomial order for local regression (default 1L).
 #' @param bounds Character – which bound(s) to return; one of
 #'   "both" (default), "lower", "upper".
 #' @param solver Character – CVXR solver (default taken from
