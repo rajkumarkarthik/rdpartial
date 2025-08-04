@@ -184,20 +184,20 @@ bounds_fuzzy <- function(x,
     # get the proportion at each value of Xr
     v_y <- tapply(c(y[left], y[right]), c(x[left], x[right]), mean)
     prop.y <- data.frame(
-      h.level  = as.numeric(names(v_y)),
+      x_value  = as.numeric(names(v_y)),
       avg.prop = as.numeric(v_y)
     )
 
     v_z <- tapply(c(z[left], z[right]), c(x[left], x[right]), mean)
     prop.z <- data.frame(
-      h.level  = as.numeric(names(v_z)),
+      x_value  = as.numeric(names(v_z)),
       avg.prop = as.numeric(v_z)
     )
 
     # set appropriate names
     myHist <- data.frame(table(x))
-    names(myHist)[1] <- 'hlevel'
-    names(true_counts) <- c("hlevel", "numTrueSubjects")
+    names(myHist)[1] <- 'x_value'
+    names(true_counts) <- c("x_value", "n_true")
 
     # generate the outcomes plot
     yPlot <- outcomes_plot(
@@ -210,9 +210,9 @@ bounds_fuzzy <- function(x,
       lowerWeights  = lowerWeights, # weights for right‑side lower bound LOESS
       ylab          = ylab,
       xlab          = xlab,
-      title         = "Outcome vs. Hemoglobin Level",
+      title         = "Outcome vs. Running Variable",
       order         = poly_order,   # match the polynomial order used earlier
-      hist          = myHist,         # histogram of hemoglobin levels
+      hist          = myHist,         # histogram of running variable values
       trueCounts    = true_counts,  # data.frame(x, n_true) from the inputs
       cutoff        = cutoff        # the actual cutoff threshold
     )
@@ -228,9 +228,9 @@ bounds_fuzzy <- function(x,
       lowerWeights  = lowerWeights, # weights for right‑side lower bound LOESS
       ylab          = ylab,
       xlab          = "Treatment Indicator",
-      title         = "Treatment vs. Hemoglobin Level",
+      title         = "Treatment vs. Running Variable",
       order         = poly_order,   # match the polynomial order used earlier
-      hist          = myHist,         # histogram of hemoglobin levels
+      hist          = myHist,         # histogram of running variable values
       trueCounts    = true_counts,  # data.frame(x, n_true) from the inputs
       cutoff        = cutoff        # the actual cutoff threshold
     )
