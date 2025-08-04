@@ -22,19 +22,7 @@ bounds_fuzzy(
 )
 }
 \arguments{
-\item{x}{Numeric vector – running variable.}
-
-\item{y}{Numeric vector – outcome variable.}
-
 \item{z}{Numeric vector (0/1) – treatment take‑up.}
-
-\item{cutoff}{Numeric – threshold separating control (< cutoff) from treatment (≥ cutoff).}
-
-\item{true_counts}{Data.frame with columns \code{x} (support points ≥ cutoff) and \code{n_true} (estimated number of non-manipulated observations at each support point).}
-
-\item{weights}{Numeric vector of observation weights (optional).}
-
-\item{poly_order}{Integer – degree of polynomial to use in local regression (default: 1).}
 
 \item{bounds}{Character – which bound(s) to return; one of
 "both" (default), "lower", "upper".}
@@ -45,12 +33,6 @@ example).  Determines the sign of the optimisation objective.}
 
 \item{solver}{Character – CVXR solver (default taken from
 \code{getOption("rdpartial.solver")}; package default is "ECOS").}
-
-\item{runVarPlots}{Logical – whether to generate diagnostic plots of the running variable (default: FALSE).}
-
-\item{ylab}{Character – label for y-axis in plots (optional).}
-
-\item{xlab}{Character – label for x-axis in plots (optional).}
 
 \item{...}{Further arguments passed on to \code{\link[CVXR:psolve]{CVXR::solve()}}.  Use this to
 override CVXR tolerances or provide a different solver control list.}
@@ -65,7 +47,7 @@ Extension of \code{\link[=bounds_sharp]{bounds_sharp()}} to \emph{fuzzy} designs
 jumps (up \strong{or} down) at the cutoff but is not deterministic.  The estimator
 solves a linear‑fractional programme as described in Rosenman \emph{et al.} (2025)
 using \code{CVXR}.  Manipulation to the right of the cutoff is bounded by
-\code{true_counts} obtained from \code{\link{.density_estimation}}.
+\code{true_counts} obtained from \code{\link[=density_estimation]{density_estimation()}}.
 }
 \section{Required Inputs}{
 

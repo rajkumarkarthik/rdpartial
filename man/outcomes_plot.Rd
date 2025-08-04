@@ -38,8 +38,6 @@ outcomes_plot(
 
 \item{ylab}{Character. Label for the y-axis.}
 
-\item{xlab}{Character. Label for the x-axis.}
-
 \item{title}{Character. Plot title.}
 
 \item{order}{Integer. Degree of LOESS polynomial (1 = linear, 2 = quadratic).}

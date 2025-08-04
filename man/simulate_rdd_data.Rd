@@ -31,9 +31,9 @@ simulate_rdd_data(
 
 \item{lambda}{Poisson mean when \code{dist = "poisson"}.}
 
-\item{range}{Integer length‑2 support when \code{dist = "uniform"}.}
+\item{range}{Integer length-2 support when \code{dist = "uniform"}.}
 
-\item{beta}{Numeric length‑3 vector for the quadratic mean of \code{Y(0)}.}
+\item{beta}{Numeric length-3 vector for the quadratic mean of \code{Y(0)}.}
 
 \item{tau}{Constant treatment effect added to \code{Y(1)} (default \code{1}).}
 
@@ -44,7 +44,7 @@ simulate_rdd_data(
 \item{p0, p1}{Treatment probabilities below / above cutoff when
 \code{design = "fuzzy"}.}
 
-\item{manip_width}{Numeric ≥ 0 — interval width subject to manipulation just
+\item{manip_width}{Numeric ≥ 0 - interval width subject to manipulation just
 below the cutoff.}
 
 \item{manip_prob}{Probability of manipulation for units in that interval
@@ -55,17 +55,17 @@ below the cutoff.}
 \value{
 A \code{data.frame} with columns:
 \itemize{
-\item \code{x} – running variable \strong{after} manipulation.
-\item \code{y} – realised outcome.
-\item \code{z} – treatment status.
-\item \code{x_orig} – running variable before manipulation.
-\item \code{manipulated} – logical flag.
+\item \code{x} - running variable \strong{after} manipulation.
+\item \code{y} - realised outcome.
+\item \code{z} - treatment status.
+\item \code{x_orig} - running variable before manipulation.
+\item \code{manipulated} - logical flag.
 }
 
 The object carries attributes:
 \itemize{
-\item \code{ate_cutoff} – true treatment effect at the cutoff (\code{tau}).
-\item \code{call} – original function call.
+\item \code{ate_cutoff} - true treatment effect at the cutoff (\code{tau}).
+\item \code{call} - original function call.
 }
 }
 \description{

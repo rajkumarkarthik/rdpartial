@@ -2,23 +2,23 @@
 % Please edit documentation in R/utils.R
 \name{.poly_design}
 \alias{.poly_design}
-\title{Column–intercept polynomial design matrix}
+\title{Column-intercept polynomial design matrix}
 \usage{
 .poly_design(x, order = 1L)
 }
 \arguments{
 \item{x}{Numeric vector.}
 
-\item{order}{Non‑negative integer; the highest power of \code{x} to include.}
+\item{order}{Non-negative integer; the highest power of \code{x} to include.}
 }
 \value{
 A numeric matrix with \code{length(x)} rows and \code{order + 1} columns.
 }
 \description{
-Creates a simple polynomial basis \verb{1, x, x^2, …, x^order} that we use for the
+Creates a simple polynomial basis \verb{1, x, x^2, ..., x^order} that we use for the
 local polynomial regressions on either side of the RDD cutoff.  The function
 purposefully avoids \code{stats::poly()} because we do \emph{not} want orthogonal
-polynomials here—keeping the design untransformed eases interpretation and
+polynomials here-keeping the design untransformed eases interpretation and
 reproducibility across languages.
 }
 \keyword{internal}
