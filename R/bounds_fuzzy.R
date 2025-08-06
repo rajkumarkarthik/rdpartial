@@ -237,8 +237,8 @@ bounds_fuzzy <- function(x,
       Yr            = z[right],
       upperWeights  = upperWeights, # weights for right‑side upper bound LOESS
       lowerWeights  = lowerWeights, # weights for right‑side lower bound LOESS
-      ylab          = ylab,
-      xlab          = "Treatment Indicator",
+      ylab          = "Treatment Indicator",
+      xlab          = xlab,
       title         = "Treatment vs. Running Variable",
       order         = poly_order,   # match the polynomial order used earlier
       hist          = myHist,         # histogram of running variable values
