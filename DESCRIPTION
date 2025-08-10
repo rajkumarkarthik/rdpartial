@@ -22,5 +22,8 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Imports: CVXR, dplyr, ggplot2, splines, stats, parallel
 Suggests: 
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown
 Config/testthat/edition: 3
+VignetteBuilder: knitr

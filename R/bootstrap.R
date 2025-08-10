@@ -168,6 +168,23 @@ bootstrap_bounds <- function(data, running_var, outcome, treatment = NULL,
     if (is.null(n_cores)) n_cores <- max(1L, parallel::detectCores() - 1L)
     runner   <- function(X, FUN) parallel::mclapply(X, FUN, mc.cores = n_cores)
     progress <- FALSE  # suppress progress bar under fork
+    
+    # Provide initial progress information for parallel execution
+    if (n_boot >= 100) {
+      cat(sprintf("Starting bootstrap with %d replications using %d cores...\n", n_boot, n_cores))
+      cat("This may take several minutes. Progress updates are limited during parallel execution.\n")
+      cat("Estimated completion time: ")
+      # Rough time estimate based on sample size and bootstrap replications
+      est_time_mins <- (nrow(data) * n_boot * length(manip_regions)) / (100000 * n_cores)
+      if (est_time_mins < 1) {
+        cat("< 1 minute\n")
+      } else if (est_time_mins < 60) {
+        cat(sprintf("~%.0f minutes\n", est_time_mins))
+      } else {
+        cat(sprintf("~%.1f hours\n", est_time_mins / 60))
+      }
+      cat("\n")
+    }
   } else {
     runner <- lapply
   }
@@ -177,11 +194,20 @@ bootstrap_bounds <- function(data, running_var, outcome, treatment = NULL,
     on.exit(close(pb), add = TRUE)
   }
 
+  # Record start time for parallel execution feedback
+  boot_start_time <- Sys.time()
+  
   boot_list <- runner(seq_len(n_boot), function(i) {
     res <- eval_bounds(boot_indices[[i]])
     if (progress) utils::setTxtProgressBar(pb, i)
     res
   })
+  
+  # Provide completion feedback for parallel execution
+  if (parallel && .Platform$OS.type != "windows" && n_boot >= 100) {
+    boot_duration <- as.numeric(difftime(Sys.time(), boot_start_time, units = "mins"))
+    cat(sprintf("Bootstrap completed in %.2f minutes\n", boot_duration))
+  }
 
   # Convert to array: (n_boot, R, 2) ---------------------------------------
   R <- length(manip_regions)
