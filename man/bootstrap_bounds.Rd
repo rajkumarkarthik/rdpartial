@@ -52,8 +52,8 @@ observation weights.  If \code{NULL}, each row receives weight 1.}
 \item{ci_level}{Percentile coverage of the bootstrap interval (default
 \code{0.95}).}
 
-\item{parallel}{Logical.  If \code{TRUE}, uses \code{parallel::mclapply()} on
-non-Windows systems.}
+\item{parallel}{Logical.  If \code{TRUE}, uses \code{doParallel} for cross-platform
+parallel execution.}
 
 \item{n_cores}{Number of cores for parallel execution (defaults to
 \code{parallel::detectCores() - 1}).}

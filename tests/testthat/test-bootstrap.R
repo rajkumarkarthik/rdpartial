@@ -30,7 +30,7 @@ test_that("bootstrap_bounds shape and determinism", {
 
 test_that("bootstrap_bounds parallel matches serial", {
   skip_on_cran()
-  if (.Platform$OS.type == "windows") skip("Fork not available on Windows")
+  skip_if_not_installed("doParallel")
 
   manip_regions <- list(c(15.7, 16))
   set.seed(99)

@@ -27,8 +27,8 @@
 #' @param density_args Optional named list forwarded to `.density_estimation()`.
 #' @param ci_level Percentile coverage of the bootstrap interval (default
 #'   `0.95`).
-#' @param parallel Logical.  If `TRUE`, uses `parallel::mclapply()` on
-#'   non-Windows systems.
+#' @param parallel Logical.  If `TRUE`, uses `doParallel` for cross-platform
+#'   parallel execution.
 #' @param n_cores Number of cores for parallel execution (defaults to
 #'   `parallel::detectCores() - 1`).
 #' @param progress Logical - print a progress bar (default `TRUE`).  Progress is
@@ -56,6 +56,8 @@
 #' res$ci
 #'
 #' @importFrom stats quantile
+#' @importFrom foreach foreach %dopar%
+#' @importFrom doParallel registerDoParallel stopImplicitCluster
 bootstrap_bounds <- function(data, running_var, outcome, treatment = NULL,
                              cutoff, manip_regions,
                              estimator = c("fuzzy", "sharp"),
@@ -158,12 +160,11 @@ bootstrap_bounds <- function(data, running_var, outcome, treatment = NULL,
   }
 
   # Run bootstrap -------------------------------------------------------
-  if (parallel && .Platform$OS.type != "windows") {
+  if (parallel) {
     if (is.null(n_cores)) n_cores <- max(1L, parallel::detectCores() - 1L)
-    runner   <- function(X, FUN) parallel::mclapply(X, FUN, mc.cores = n_cores)
-    progress <- FALSE  # suppress progress bar under fork
-  } else {
-    runner <- lapply
+    doParallel::registerDoParallel(cores = n_cores)
+    on.exit(doParallel::stopImplicitCluster(), add = TRUE)
+    progress <- FALSE  # suppress progress bar in parallel
   }
 
   if (progress) {
@@ -171,11 +172,18 @@ bootstrap_bounds <- function(data, running_var, outcome, treatment = NULL,
     on.exit(close(pb), add = TRUE)
   }
 
-  boot_list <- runner(seq_len(n_boot), function(i) {
-    res <- eval_bounds(boot_indices[[i]])
-    if (progress) utils::setTxtProgressBar(pb, i)
-    res
-  })
+  if (parallel) {
+    boot_list <- foreach::foreach(i = seq_len(n_boot), .combine = list, 
+                                  .multicombine = TRUE) %dopar% {
+      eval_bounds(boot_indices[[i]])
+    }
+  } else {
+    boot_list <- lapply(seq_len(n_boot), function(i) {
+      res <- eval_bounds(boot_indices[[i]])
+      if (progress) utils::setTxtProgressBar(pb, i)
+      res
+    })
+  }
 
   # Convert to array: (n_boot, R, 2) ---------------------------------------
   R <- length(manip_regions)
