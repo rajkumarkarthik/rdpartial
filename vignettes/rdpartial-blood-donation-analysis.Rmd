@@ -1,0 +1,497 @@
+---
+title: "Partial Identification in Blood Donation RDD Analysis"
+author: "Karthik Rajkumar, Evan Rosenman, Romain Gauriot, Robert Slonim"
+date: "`r Sys.Date()`"
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 3
+    number_sections: true
+vignette: >
+  %\VignetteIndexEntry{Partial Identification in Blood Donation RDD Analysis}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+bibliography: references.bib
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 5,
+  warning = FALSE,
+  message = FALSE
+)
+```
+
+# Introduction
+
+This vignette demonstrates the implementation of partial identification methods for regression discontinuity designs when units may manipulate the running variable, using the `rdpartial` package. The methodology addresses a critical limitation of standard RDD approaches when manipulation around the cutoff threshold is suspected.
+
+The statistical theory underlying these methods is detailed in @paper_preprint, which develops a framework for obtaining robust bounds on treatment effects even when the running variable distribution may be manipulated. Rather than requiring assumptions about the absence of manipulation (which may be violated), this approach acknowledges potential manipulation and derives worst-case bounds under varying manipulation scenarios.
+
+## Background and Motivation
+
+Regression discontinuity designs rely on the assumption that units cannot precisely manipulate their assignment variable around a threshold. However, in many empirical contexts, this assumption is questionable. For example, in our blood donation application, potential donors with hemoglobin levels near the deferral threshold might engage in behaviors that artificially inflate their readings.
+
+When manipulation is possible, standard RDD estimates may be severely biased. The partial identification approach implemented in `rdpartial` provides an alternative that:
+
+1. Acknowledges uncertainty about the extent of manipulation
+2. Provides bounds rather than point estimates
+3. Offers robustness against various manipulation scenarios
+4. Maintains identification power when manipulation is limited
+
+# Package Installation and Setup
+
+```{r installation, eval = FALSE}
+# Install from GitHub (development version)
+if (!requireNamespace("devtools", quietly = TRUE)) {
+  install.packages("devtools")
+}
+devtools::install_github("rajkumarkarthik/rdpartial")
+```
+
+```{r libraries}
+library(rdpartial)
+library(dplyr)
+library(ggplot2)
+library(parallel)
+
+# Set analysis parameters
+set.seed(2021)
+```
+
+# Analysis Configuration
+
+We begin by setting key parameters for our analysis. These can be modified to explore different scenarios or replicate specific results.
+
+```{r parameters}
+# Analysis settings
+analysisGender  <- "F"  # Focus on female donors
+cutoff          <- ifelse(analysisGender == "M", 13.5, 12.5)   # Hemoglobin threshold (g/dL)
+cutoff_upper    <- ifelse(analysisGender == "M", 18.0, 17.0)   # Upper bound for analysis range
+
+# Outcome and treatment variables
+outcome_col     <- "comebackinnext12month"  # Binary: returned within 12 months
+treatment_col   <- "accepted"               # Binary: 1 = accepted, 0 = deferred
+treat_direction <- "decrease"               # Direction of treatment effect at cutoff
+
+# Estimation parameters
+poly_order      <- 1L                       # Local polynomial order
+num_folds       <- 5L                       # Cross-validation folds for density estimation
+
+# Parallel computing settings
+n_cores <- parallel::detectCores() - 1L     # Leave one core free
+```
+
+## Defining Manipulation Regions
+
+Manipulation regions represent suspected intervals where donors might artificially increase their hemoglobin readings. We test multiple intervals to assess robustness.
+
+```{r manipulation_regions}
+# Define candidate manipulation intervals
+# These represent different assumptions about manipulation extent
+if(analysisGender == 'F') {
+  manip_regions <- list(
+    c(cutoff - 0.1, cutoff),     # Narrow manipulation: 0.1 g/dL below cutoff
+    c(cutoff - 0.2, cutoff),     # Moderate manipulation: 0.2 g/dL below cutoff  
+    c(cutoff - 0.3, cutoff),     # Wide manipulation: 0.3 g/dL below cutoff
+    c(cutoff - 0.4, cutoff),     # Very wide manipulation: 0.4 g/dL below cutoff
+    c(cutoff - 0.1, cutoff + 0.1), # Symmetric narrow manipulation
+    c(cutoff - 0.2, cutoff + 0.1), # Asymmetric moderate manipulation
+    c(cutoff - 0.3, cutoff + 0.1), # Asymmetric wide manipulation
+    c(cutoff - 0.4, cutoff + 0.1), # Asymmetric very wide manipulation
+    c(cutoff - 0.1, cutoff + 0.2), # Extended upper manipulation
+    c(cutoff - 0.2, cutoff + 0.2), # Extended moderate manipulation
+    c(cutoff - 0.3, cutoff + 0.2), # Extended wide manipulation
+    c(cutoff - 0.4, cutoff + 0.2)  # Extended very wide manipulation
+  )
+} else if(analysisGender == 'M') {
+  # For males, use a single manipulation region based on empirical analysis
+  manip_regions <- list(c(cutoff - 0.6, cutoff + 0.1))
+}
+
+cat("Testing", length(manip_regions), "manipulation regions for", 
+    ifelse(analysisGender == 'F', "women", "men"), "\n")
+```
+
+# Data Loading and Preparation
+
+We load the blood donation data from the GitHub repository and prepare it for analysis.
+
+```{r data_loading}
+# Load data from GitHub repository
+data_url <- "https://raw.githubusercontent.com/rajkumarkarthik/rdpartial-data/main/Rosenman.et.al.2025_simulated_data_all.csv"
+
+cat("Loading data from GitHub repository...\n")
+raw <- read.csv(data_url)
+
+# Extract and clean the relevant dataset
+dat <- raw %>%
+  filter(gender == analysisGender,
+         hlevel >= 0, 
+         hlevel <= cutoff_upper) %>%        # Restrict to analysis range
+  mutate(
+    hlevel = round(hlevel, 1),              # Round hemoglobin to nearest 0.1
+    age    = ifelse(is.na(age), mean(age, na.rm = TRUE), age)  # Impute missing age
+  )
+
+# Additional filtering for male analysis (exclude plasma donations)
+if(analysisGender == 'M') {
+  dat <- dat %>%
+    filter(donationtype != 'Plasma')
+}
+
+# For time-to-next-donation outcome, filter to those with valid follow-up
+if (outcome_col == "Ndaytonextdonation") {
+  dat <- dat %>%
+    filter(!is.na(Ndaytonextdonation), !is.infinite(Ndaytonextdonation))
+}
+
+cat("Analysis dataset: ", nrow(dat), "observations\n")
+cat("Outcome variable:", outcome_col, "\n")
+cat("Treatment variable:", treatment_col, "\n")
+```
+
+# Preliminary Analysis Setup
+
+Before running the main analysis, we prepare the histogram data and kernel weights required for the density estimation and bounds computation.
+
+```{r preliminaries}
+# Create histogram for density estimation
+hist_df <- dat %>%
+  count(hlevel, name = "freq") %>%
+  arrange(hlevel) %>%
+  rename(x = hlevel)
+
+cat("Histogram created with", nrow(hist_df), "unique hemoglobin values\n")
+
+# Compute tricubic kernel weights
+# These weights give more influence to observations closer to the cutoff
+ix_left   <- dat$hlevel < cutoff
+ix_right  <- !ix_left
+
+w_kernel <- numeric(nrow(dat))
+w_kernel[ix_left]  <- rdpartial:::.tricube(cutoff - dat$hlevel[ix_left])
+w_kernel[ix_right] <- rdpartial:::.tricube(dat$hlevel[ix_right] - cutoff)
+
+cat("Kernel weights computed for", sum(ix_left), "left-side and", 
+    sum(ix_right), "right-side observations\n")
+```
+
+# Parallel Analysis Across Manipulation Regions
+
+We now iterate through all manipulation regions, performing density estimation and bounds computation for each. To improve computational efficiency and provide progress feedback, we implement parallel processing with progress reporting.
+
+```{r analysis_function}
+# Define analysis function for a single manipulation region
+analyze_region <- function(j, region, hist_df, dat, cutoff, num_folds, 
+                          w_kernel, outcome_col, treatment_col, poly_order, 
+                          treat_direction) {
+  
+  # Density estimation to obtain non-manipulated counts
+  dens_out <- rdpartial:::.density_estimation(
+    hist_df      = hist_df,
+    manip_region = region,
+    cutoff       = cutoff,
+    knot_options = 3:15,
+    num_folds    = num_folds,
+    make_plot    = TRUE
+  )
+  
+  # Partial-identification bounds computation (fuzzy design)
+  bnds <- rdpartial::bounds_fuzzy(
+    x               = dat$hlevel,
+    y               = dat[[outcome_col]],
+    z               = dat[[treatment_col]],
+    cutoff          = cutoff,
+    true_counts     = dens_out$counts,
+    weights         = w_kernel,
+    poly_order      = poly_order,
+    treat_direction = treat_direction,
+    bounds          = "both",
+    runVarPlots     = TRUE,
+    ylab            = outcome_col,
+    xlab            = "Hemoglobin Level (g/dL)"
+  )
+  
+  # Return comprehensive results
+  list(
+    region_id    = j,
+    bounds       = bnds,
+    avg_cv_sse   = dens_out$avg_cv_sse,
+    avg_sse      = dens_out$avg_sse,
+    knots        = dens_out$knots,
+    density_plot = dens_out$plot
+  )
+}
+```
+
+```{r parallel_analysis}
+cat("Starting parallel analysis across", length(manip_regions), "manipulation regions...\n")
+cat("Using", n_cores, "cores for parallel computation\n\n")
+
+# Set up progress reporting
+start_time <- Sys.time()
+
+# Parallel execution with progress updates
+if(.Platform$OS.type == "windows") {
+  # Use sequential processing on Windows (with progress bar)
+  cat("Windows detected: using sequential processing with progress bar\n")
+  
+  pb <- txtProgressBar(min = 0, max = length(manip_regions), style = 3)
+  results <- vector("list", length(manip_regions))
+  
+  for(j in seq_along(manip_regions)) {
+    region <- manip_regions[[j]]
+    cat(sprintf("\n• Processing Region %d: [%0.2f, %0.2f]\n", j, region[1], region[2]))
+    
+    results[[j]] <- analyze_region(j, region, hist_df, dat, cutoff, num_folds, 
+                                  w_kernel, outcome_col, treatment_col, 
+                                  poly_order, treat_direction)
+    
+    setTxtProgressBar(pb, j)
+  }
+  close(pb)
+  
+} else {
+  # Use parallel processing on Unix-like systems
+  cat("Unix-like system detected: using parallel processing\n")
+  
+  # Display progress by printing region information
+  for(j in seq_along(manip_regions)) {
+    region <- manip_regions[[j]]
+    cat(sprintf("• Queued Region %d: [%0.2f, %0.2f]\n", j, region[1], region[2]))
+  }
+  cat("\nExecuting parallel analysis...\n")
+  
+  # Execute in parallel
+  results <- parallel::mclapply(seq_along(manip_regions), function(j) {
+    analyze_region(j, manip_regions[[j]], hist_df, dat, cutoff, num_folds, 
+                  w_kernel, outcome_col, treatment_col, poly_order, treat_direction)
+  }, mc.cores = n_cores)
+}
+
+end_time <- Sys.time()
+cat(sprintf("\nAnalysis completed in %.2f minutes\n", 
+           as.numeric(difftime(end_time, start_time, units = "mins"))))
+```
+
+# Results Summary and Interpretation
+
+Now we extract and summarize the results across all manipulation regions.
+
+```{r results_summary}
+# Extract bounds matrix
+bounds_mat <- do.call(rbind, lapply(results, function(x) x$bounds$bounds))
+rownames(bounds_mat) <- paste0("R", seq_along(manip_regions))
+
+cat("Partial-identification bounds across manipulation regions:\n")
+print(round(bounds_mat, 4))
+
+# Extract model selection diagnostics  
+sse_tbl <- do.call(rbind, lapply(results, function(x)
+  c(cv_sse = x$avg_cv_sse, sse = x$avg_sse, knots = x$knots)))
+rownames(sse_tbl) <- paste0("R", seq_along(manip_regions))
+
+cat("\nSpline cross-validation diagnostics:\n")
+print(round(sse_tbl, 4))
+
+# Identify optimal manipulation region (lowest cross-validation error)
+optIndex <- which.min(sse_tbl[, "cv_sse"])
+opt_region <- manip_regions[[optIndex]]
+
+cat(sprintf("\nOptimal manipulation region: R%d [%.2f, %.2f]\n", 
+           optIndex, opt_region[1], opt_region[2]))
+cat(sprintf("Cross-validation SSE: %.4f\n", sse_tbl[optIndex, "cv_sse"]))
+cat(sprintf("Optimal bounds: [%.4f, %.4f]\n", 
+           bounds_mat[optIndex, "lower"], bounds_mat[optIndex, "upper"]))
+```
+
+# Visualization of Results
+
+Let's visualize the key results from our optimal manipulation region.
+
+```{r plots, fig.width=10, fig.height=12}
+# Plot density estimation for optimal region
+density_plot <- results[[optIndex]]$density_plot +
+  ggtitle(paste0('Density Estimation - Optimal Manipulation Region for ',
+                ifelse(analysisGender == 'F', "Women", "Men"), 
+                ': [', paste(round(opt_region, 2), collapse = ', '), ']')) +
+  theme_minimal()
+
+print(density_plot)
+
+# Plot outcome variable
+outcome_plot <- results[[optIndex]]$bounds$yPlot +
+  ggtitle("Outcome Analysis: Return Probability vs. Hemoglobin Level") +
+  theme_minimal()
+
+print(outcome_plot)
+
+# Plot treatment variable  
+treatment_plot <- results[[optIndex]]$bounds$zPlot +
+  ggtitle("Treatment Analysis: Acceptance Probability vs. Hemoglobin Level") +
+  theme_minimal()
+
+print(treatment_plot)
+```
+
+# Bootstrap Confidence Intervals
+
+Finally, we compute bootstrap confidence intervals for the bounds. This step uses parallel processing and includes enhanced progress reporting to handle the computational intensity.
+
+```{r bootstrap_setup}
+# Bootstrap parameters
+n_boot <- 500  # Number of bootstrap replications
+
+cat("Computing bootstrap confidence intervals...\n")
+cat(sprintf("Bootstrap replications: %d\n", n_boot))
+cat(sprintf("Parallel cores: %d\n", n_cores))
+cat("This may take several minutes...\n\n")
+```
+
+```{r bootstrap_analysis}
+# Enhanced bootstrap with progress reporting
+start_boot_time <- Sys.time()
+
+# Display initial information
+cat("Bootstrap analysis configuration:\n")
+cat(sprintf("• Dataset: %d observations (%s donors)\n", nrow(dat), 
+           ifelse(analysisGender == 'F', "female", "male")))
+cat(sprintf("• Manipulation regions: %d scenarios\n", length(manip_regions)))
+cat(sprintf("• Bootstrap replications: %d\n", n_boot))
+cat(sprintf("• Parallel processing: %s\n", 
+           ifelse(.Platform$OS.type != "windows", "enabled", "disabled (Windows)")))
+
+if(.Platform$OS.type != "windows") {
+  cat("Note: Progress updates are limited during parallel bootstrap execution\n")
+  cat("to avoid output conflicts. Please be patient...\n\n")
+}
+
+# Execute bootstrap with parallel processing enabled
+bootBounds <- rdpartial::bootstrap_bounds(
+  data            = dat,
+  running_var     = 'hlevel',
+  outcome         = outcome_col,
+  treatment       = treatment_col,
+  cutoff          = cutoff,
+  manip_regions   = manip_regions,
+  estimator       = 'fuzzy',
+  n_boot          = n_boot,
+  parallel        = (.Platform$OS.type != "windows"),  # Enable parallel on non-Windows
+  n_cores         = n_cores,
+  progress        = (.Platform$OS.type == "windows"),   # Progress bar only on Windows
+  seed            = 2021
+)
+
+end_boot_time <- Sys.time()
+boot_duration <- as.numeric(difftime(end_boot_time, start_boot_time, units = "mins"))
+
+cat(sprintf("\nBootstrap analysis completed in %.2f minutes\n", boot_duration))
+```
+
+```{r bootstrap_results}
+# Display bootstrap confidence intervals
+cat("Bootstrap 95% Confidence Intervals:\n")
+print(bootBounds)
+
+# Enhanced results summary
+cat("\nDetailed Bootstrap Results Summary:\n")
+cat("====================================\n")
+
+ci_matrix <- bootBounds$ci
+for(i in 1:nrow(ci_matrix)) {
+  region <- manip_regions[[i]]
+  cat(sprintf("Region %d [%.2f, %.2f]: CI = [%.4f, %.4f], Width = %.4f\n",
+             i, region[1], region[2], 
+             ci_matrix[i, "lwr"], ci_matrix[i, "upr"],
+             ci_matrix[i, "upr"] - ci_matrix[i, "lwr"]))
+}
+
+# Highlight optimal region results
+opt_ci <- ci_matrix[optIndex, ]
+cat(sprintf("\nOptimal Region Results (R%d):\n", optIndex))
+cat(sprintf("• Manipulation interval: [%.2f, %.2f] g/dL\n", opt_region[1], opt_region[2]))
+cat(sprintf("• Point bounds: [%.4f, %.4f]\n", 
+           bounds_mat[optIndex, "lower"], bounds_mat[optIndex, "upper"]))
+cat(sprintf("• 95%% CI: [%.4f, %.4f]\n", opt_ci["lwr"], opt_ci["upr"]))
+cat(sprintf("• CI width: %.4f\n", opt_ci["upr"] - opt_ci["lwr"]))
+```
+
+# Interpretation and Policy Implications
+
+The analysis provides several key insights:
+
+## Methodological Findings
+
+1. **Manipulation Detection**: The density estimation successfully identifies potential manipulation patterns in the hemoglobin distribution around the cutoff threshold.
+
+2. **Robustness Assessment**: By testing multiple manipulation regions, we assess how sensitive our conclusions are to different assumptions about manipulation extent.
+
+3. **Model Selection**: Cross-validation selects the optimal spline specification, balancing model flexibility with overfitting concerns.
+
+## Substantive Results
+
+The partial identification bounds provide robust estimates of the causal effect while acknowledging uncertainty about manipulation. Key findings include:
+
+- **Treatment Effect Bounds**: The estimated bounds capture the range of plausible treatment effects under different manipulation scenarios.
+
+- **Policy Relevance**: Even with potential manipulation, we can make meaningful policy inferences about the effects of hemoglobin deferral policies on donor return behavior.
+
+- **Confidence Intervals**: Bootstrap confidence intervals quantify sampling uncertainty around our bounds estimates.
+
+## Advantages of the Partial Identification Approach
+
+1. **Transparency**: Explicitly acknowledges and models potential manipulation rather than assuming it away.
+
+2. **Robustness**: Provides valid inference even when traditional RDD assumptions are violated.
+
+3. **Flexibility**: Allows researchers to test different manipulation scenarios and assess robustness.
+
+4. **Practical Value**: Delivers actionable policy insights even under uncertainty about manipulation extent.
+
+# Computational Performance Notes
+
+This analysis demonstrates the computational benefits of parallel processing in the `rdpartial` package:
+
+```{r performance_summary}
+cat("Performance Summary:\n")
+cat("===================\n")
+cat(sprintf("Analysis duration: %.2f minutes\n", 
+           as.numeric(difftime(end_time, start_time, units = "mins"))))
+cat(sprintf("Bootstrap duration: %.2f minutes\n", boot_duration))
+cat(sprintf("Total computation time: %.2f minutes\n", 
+           as.numeric(difftime(end_boot_time, start_time, units = "mins"))))
+cat(sprintf("Parallel cores utilized: %d\n", n_cores))
+cat(sprintf("Bootstrap replications: %d\n", n_boot))
+cat(sprintf("Manipulation regions tested: %d\n", length(manip_regions)))
+
+if(.Platform$OS.type != "windows") {
+  cat("\nParallel processing significantly reduced computation time.\n")
+  cat("Sequential processing would require substantially longer.\n")
+} else {
+  cat("\nFor optimal performance on multi-core systems,\n")
+  cat("consider running this analysis on Unix-like systems\n")
+  cat("where parallel processing is fully supported.\n")
+}
+```
+
+# Conclusion
+
+The `rdpartial` package provides a comprehensive framework for implementing partial identification methods in regression discontinuity designs with potential manipulation. This analysis demonstrates:
+
+1. **Methodological Rigor**: Systematic testing of multiple manipulation scenarios ensures robust conclusions.
+
+2. **Computational Efficiency**: Parallel processing capabilities make the analysis feasible for realistic sample sizes and bootstrap replications.
+
+3. **Practical Value**: The approach delivers actionable insights for policy-makers even under uncertainty about manipulation.
+
+4. **Transparency**: All assumptions about manipulation are made explicit and can be varied to assess robustness.
+
+Future extensions might include sensitivity analysis over additional parameters, alternative manipulation region specifications, or comparison with other robust RDD methods.
+
+# References
+
+For more details on the theoretical foundations, see @paper_preprint. The package documentation provides additional technical details and examples for various use cases.
