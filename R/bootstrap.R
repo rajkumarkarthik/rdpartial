@@ -20,6 +20,9 @@
 #' @param manip_regions List of numeric length-2 vectors `(lower, upper)` giving
 #'   suspected manipulation intervals.
 #' @param estimator Either "fuzzy" (default) or "sharp".
+#' @param treat_direction Either "increase" (treatment prob. jumps *up* at the
+#'   cutoff – standard case) or "decrease" (jumps *down*, e.g. donor *deferral*
+#'   example).  Determines the sign of the optimisation objective.
 #' @param n_boot Integer number of bootstrap replications (default `200`).
 #' @param poly_order Local polynomial order (default `1`).
 #' @param weight_var Optional character column in `data` holding non-negative
@@ -59,6 +62,7 @@
 bootstrap_bounds <- function(data, running_var, outcome, treatment = NULL,
                              cutoff, manip_regions,
                              estimator = c("fuzzy", "sharp"),
+                             treat_direction = c("increase", "decrease"),
                              n_boot = 200L, poly_order = 1L, weight_var = NULL,
                              density_args = list(), ci_level = 0.95,
                              parallel = FALSE, n_cores = NULL,
@@ -143,7 +147,8 @@ bootstrap_bounds <- function(data, running_var, outcome, treatment = NULL,
                      weights    = weights_vec,
                      poly_order = poly_order,
                      true_counts = tc,
-                     bounds      = "both")
+                     bounds      = "both",
+                     treat_direction = treat_direction)
       } else {
         bounds_fuzzy(x          = rv,
                      y          = df[[outcome]],
@@ -152,7 +157,8 @@ bootstrap_bounds <- function(data, running_var, outcome, treatment = NULL,
                      weights    = weights_vec,
                      poly_order = poly_order,
                      true_counts = tc,
-                     bounds      = "both")
+                     bounds      = "both",
+                     treat_direction = treat_direction)
       }
     })  # returns 2 × R matrix
   }
