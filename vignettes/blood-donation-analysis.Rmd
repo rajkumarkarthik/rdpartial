@@ -8,7 +8,7 @@ output:
     toc_depth: 3
     number_sections: true
 vignette: >
-  %\VignetteIndexEntry{Partial Identification in Blood Donation RDD Analysis}
+  %\VignetteIndexEntry{Blood Donation RDD Analysis}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 bibliography: references.bib
@@ -29,7 +29,7 @@ knitr::opts_chunk$set(
 
 This vignette demonstrates the implementation of partial identification methods for regression discontinuity designs when units may manipulate the running variable, using the `rdpartial` package. The methodology addresses a critical limitation of standard RDD approaches when manipulation around the cutoff threshold is suspected.
 
-The statistical theory underlying these methods is detailed in @paper_preprint, which develops a framework for obtaining robust bounds on treatment effects even when the running variable distribution may be manipulated. Rather than requiring assumptions about the absence of manipulation (which may be violated), this approach acknowledges potential manipulation and derives worst-case bounds under varying manipulation scenarios.
+The statistical theory underlying these methods is detailed in @rosenman2025donorsdeferralreturnbehavior, which develops a framework for obtaining robust bounds on treatment effects even when the running variable distribution may be manipulated. Rather than requiring assumptions about the absence of manipulation (which may be violated), this approach acknowledges potential manipulation and derives worst-case bounds under varying manipulation scenarios.
 
 ## Background and Motivation
 
@@ -494,4 +494,4 @@ Future extensions might include sensitivity analysis over additional parameters,
 
 # References
 
-For more details on the theoretical foundations, see @paper_preprint. The package documentation provides additional technical details and examples for various use cases.
+For more details on the theoretical foundations, see @rosenman2025donorsdeferralreturnbehavior. The package documentation provides additional technical details and examples for various use cases.
