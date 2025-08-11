@@ -56,3 +56,5 @@ ehthumbs.db
 Thumbs.db
 /doc/
 /Meta/
+.Rdata
+.quarto
