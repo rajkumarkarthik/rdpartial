@@ -98,9 +98,6 @@ bounds_fuzzy <- function(x,
   .check_columns(true_counts, c("x", "n_true"))
   stopifnot(all(true_counts$x >= cutoff))
 
-  if(treat_direction == 'decrease')
-    z <- 1 - z
-
   # ---- split sample ---------------------------------------------------------
   left  <- x <  cutoff
   right <- x >= cutoff
