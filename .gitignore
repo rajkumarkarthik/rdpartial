@@ -61,3 +61,5 @@ rsconnect/
 .Trashes
 ehthumbs.db
 Thumbs.db
+/doc/
+/Meta/

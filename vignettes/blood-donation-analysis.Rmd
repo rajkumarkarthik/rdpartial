@@ -9,7 +9,7 @@ output:
     toc_depth: 3
     number_sections: true
 vignette: >
-  %\VignetteIndexEntry{Blood Donation RDD Analysis}
+  %\VignetteIndexEntry{Partial Identification in Blood Donation RDD Analysis}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 bibliography: references.bib

@@ -18,7 +18,7 @@ bootstrap_bounds(
   weight_var = NULL,
   density_args = list(),
   ci_level = 0.95,
-  parallel = FALSE,
+  parallel = TRUE,
   n_cores = NULL,
   progress = TRUE,
   seed = NULL
