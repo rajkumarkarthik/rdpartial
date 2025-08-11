@@ -42,6 +42,10 @@ vignettes/*.pdf
 # pkgdown site
 docs/
 
+# Package build artifacts
+Meta/
+doc/
+
 # translation temp files
 po/*~
 
