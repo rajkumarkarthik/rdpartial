@@ -61,7 +61,7 @@ bootstrap_bounds <- function(data, running_var, outcome, treatment = NULL,
                              estimator = c("fuzzy", "sharp"),
                              n_boot = 200L, poly_order = 1L, weight_var = NULL,
                              density_args = list(), ci_level = 0.95,
-                             parallel = FALSE, n_cores = NULL,
+                             parallel = TRUE, n_cores = NULL,
                              progress = TRUE, seed = NULL) {
 
   # Sanity checks -------------------------------------------------------
