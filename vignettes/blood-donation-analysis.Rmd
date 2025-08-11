@@ -1,5 +1,6 @@
 ---
 title: "Partial Identification in Blood Donation RDD Analysis"
+subtitle: "Using Simulated Data for Package Demonstration"
 author: "Karthik Rajkumar, Evan Rosenman, Romain Gauriot, Robert Slonim"
 date: "`r Sys.Date()`"
 output: 
@@ -27,20 +28,19 @@ knitr::opts_chunk$set(
 
 # Introduction
 
-This vignette demonstrates the implementation of partial identification methods for regression discontinuity designs when units may manipulate the running variable, using the `rdpartial` package. The methodology addresses a critical limitation of standard RDD approaches when manipulation around the cutoff threshold is suspected.
+The `rdpartial` package implements partial identification methods for regression discontinuity designs when units may manipulate the running variable. This vignette demonstrates the package functionality using **simulated blood donation data**, where potential donors near the hemoglobin cutoff may influence their readings.
 
-The statistical theory underlying these methods is detailed in @rosenman2025donorsdeferralreturnbehavior, which develops a framework for obtaining robust bounds on treatment effects even when the running variable distribution may be manipulated. Rather than requiring assumptions about the absence of manipulation (which may be violated), this approach acknowledges potential manipulation and derives worst-case bounds under varying manipulation scenarios.
+Standard RDD estimators assume no manipulation in the running variable. When this assumption fails, estimates may be severely biased. The `rdpartial` package provides robust bounds on treatment effects that remain valid under various manipulation scenarios. The methodology is detailed in @rosenman2025donorsdeferralreturnbehavior.
 
-## Background and Motivation
+## Methodology
 
-Regression discontinuity designs rely on the assumption that units cannot precisely manipulate their assignment variable around a threshold. However, in many empirical contexts, this assumption is questionable. For example, in our blood donation application, potential donors with hemoglobin levels near the deferral threshold might engage in behaviors that artificially inflate their readings.
+The package addresses manipulation concerns by:
 
-When manipulation is possible, standard RDD estimates may be severely biased. The partial identification approach implemented in `rdpartial` provides an alternative that:
+**Acknowledging manipulation uncertainty**: Rather than assuming no manipulation, the approach explicitly models manipulation intervals where units may influence their running variable values.
 
-1. Acknowledges uncertainty about the extent of manipulation
-2. Provides bounds rather than point estimates
-3. Offers robustness against various manipulation scenarios
-4. Maintains identification power when manipulation is limited
+**Providing bounds**: Instead of point estimates that may be biased, the method delivers bounds that capture the range of plausible treatment effects under different manipulation scenarios.
+
+**Ensuring robustness**: The bounds account for worst-case manipulation within the specified region. The bounds remain valid regardless of the exact manipulation pattern, provided manipulation does not exceed the assumed region boundaries.
 
 # Package Installation and Setup
 
@@ -87,7 +87,7 @@ n_cores <- parallel::detectCores() - 1L     # Leave one core free
 
 ## Defining Manipulation Regions
 
-Manipulation regions represent suspected intervals where donors might artificially increase their hemoglobin readings. We test multiple intervals to assess robustness.
+The primary input to `rdpartial` functions is the specification of manipulation intervals where units may influence their running variable values. The analysis tests multiple manipulation regions to assess robustness across different manipulation assumptions.
 
 ```{r manipulation_regions}
 # Define candidate manipulation intervals
@@ -116,15 +116,16 @@ cat("Testing", length(manip_regions), "manipulation regions for",
     ifelse(analysisGender == 'F', "women", "men"), "\n")
 ```
 
-# Data Loading and Preparation
+# Data Preparation
 
-We load the blood donation data from the GitHub repository and prepare it for analysis.
+The analysis uses **simulated blood donation data** that replicates the structure of the original study. The simulated data is publicly available for demonstration purposes in the study since the original study data consists of confidential medical records.
 
 ```{r data_loading}
-# Load data from GitHub repository
+# Load simulated data from GitHub repository
+# NOTE: This is simulated data, not the original confidential medical records
 data_url <- "https://raw.githubusercontent.com/rajkumarkarthik/rdpartial-data/main/Rosenman.et.al.2025_simulated_data_all.csv"
 
-cat("Loading data from GitHub repository...\n")
+cat("Loading simulated data from GitHub repository...\n")
 raw <- read.csv(data_url)
 
 # Extract and clean the relevant dataset
@@ -154,9 +155,9 @@ cat("Outcome variable:", outcome_col, "\n")
 cat("Treatment variable:", treatment_col, "\n")
 ```
 
-# Preliminary Analysis Setup
+# Data Preprocessing
 
-Before running the main analysis, we prepare the histogram data and kernel weights required for the density estimation and bounds computation.
+The analysis requires constructing a histogram of the running variable and computing tricubic kernel weights for local polynomial estimation.
 
 ```{r preliminaries}
 # Create histogram for density estimation
@@ -180,9 +181,9 @@ cat("Kernel weights computed for", sum(ix_left), "left-side and",
     sum(ix_right), "right-side observations\n")
 ```
 
-# Parallel Analysis Across Manipulation Regions
+# Estimation
 
-We now iterate through all manipulation regions, performing density estimation and bounds computation for each. To improve computational efficiency and provide progress feedback, we implement parallel processing with progress reporting.
+The estimation procedure tests each manipulation region, with automatic spline specification selection via cross-validation. Parallel processing is employed for computational efficiency.
 
 ```{r analysis_function}
 # Define analysis function for a single manipulation region
@@ -195,7 +196,8 @@ analyze_region <- function(j, region, hist_df, dat, cutoff, num_folds,
     hist_df      = hist_df,
     manip_region = region,
     cutoff       = cutoff,
-    knot_options = 3:15,
+    knot_options = 3:8,
+    mod_types    = "smooth",
     num_folds    = num_folds,
     make_plot    = TRUE
   )
@@ -278,9 +280,9 @@ cat(sprintf("\nAnalysis completed in %.2f minutes\n",
            as.numeric(difftime(end_time, start_time, units = "mins"))))
 ```
 
-# Results Summary and Interpretation
+# Results
 
-Now we extract and summarize the results across all manipulation regions.
+The following sections present bounds estimates across manipulation regions and identify the optimal specification based on cross-validation performance.
 
 ```{r results_summary}
 # Extract bounds matrix
@@ -309,9 +311,9 @@ cat(sprintf("Optimal bounds: [%.4f, %.4f]\n",
            bounds_mat[optIndex, "lower"], bounds_mat[optIndex, "upper"]))
 ```
 
-# Visualization of Results
+# Visualization
 
-Let's visualize the key results from our optimal manipulation region.
+The package generates diagnostic plots for density estimation, outcome analysis, and treatment assignment patterns.
 
 ```{r plots, fig.width=10, fig.height=12}
 # Plot density estimation for optimal region
@@ -338,13 +340,13 @@ treatment_plot <- results[[optIndex]]$bounds$zPlot +
 print(treatment_plot)
 ```
 
-# Bootstrap Confidence Intervals
+# Bootstrap Inference
 
-Finally, we compute bootstrap confidence intervals for the bounds. This step uses parallel processing and includes enhanced progress reporting to handle the computational intensity.
+Bootstrap confidence intervals are computed using the `bootstrap_bounds()` function, which resamples observations while preserving the running variable distribution.
 
 ```{r bootstrap_setup}
 # Bootstrap parameters
-n_boot <- 500  # Number of bootstrap replications
+n_boot <- 100  # Increase as needed at the cost of slower computation
 
 cat("Computing bootstrap confidence intervals...\n")
 cat(sprintf("Bootstrap replications: %d\n", n_boot))
@@ -358,7 +360,7 @@ start_boot_time <- Sys.time()
 
 # Display initial information
 cat("Bootstrap analysis configuration:\n")
-cat(sprintf("• Dataset: %d observations (%s donors)\n", nrow(dat), 
+cat(sprintf("• Simulated dataset: %d observations (%s donors)\n", nrow(dat), 
            ifelse(analysisGender == 'F', "female", "male")))
 cat(sprintf("• Manipulation regions: %d scenarios\n", length(manip_regions)))
 cat(sprintf("• Bootstrap replications: %d\n", n_boot))
@@ -380,9 +382,9 @@ bootBounds <- rdpartial::bootstrap_bounds(
   manip_regions   = manip_regions,
   estimator       = 'fuzzy',
   n_boot          = n_boot,
-  parallel        = (.Platform$OS.type != "windows"),  # Enable parallel on non-Windows
+  parallel        = (.Platform$OS.type != "windows"),
   n_cores         = n_cores,
-  progress        = (.Platform$OS.type == "windows"),   # Progress bar only on Windows
+  progress        = (.Platform$OS.type == "windows"),
   seed            = 2021
 )
 
@@ -402,7 +404,7 @@ cat("\nDetailed Bootstrap Results Summary:\n")
 cat("====================================\n")
 
 ci_matrix <- bootBounds$ci
-for(i in 1:nrow(ci_matrix)) {
+for(i in seq_len(nrow(ci_matrix))) {
   region <- manip_regions[[i]]
   cat(sprintf("Region %d [%.2f, %.2f]: CI = [%.4f, %.4f], Width = %.4f\n",
              i, region[1], region[2], 
@@ -420,41 +422,31 @@ cat(sprintf("• 95%% CI: [%.4f, %.4f]\n", opt_ci["lwr"], opt_ci["upr"]))
 cat(sprintf("• CI width: %.4f\n", opt_ci["upr"] - opt_ci["lwr"]))
 ```
 
-# Interpretation and Policy Implications
+# Implementation Notes
 
-The analysis provides several key insights:
+## Bounds Interpretation
 
-## Methodological Findings
+The bounds matrix contains the range of plausible treatment effects under each manipulation scenario:
 
-1. **Manipulation Detection**: The density estimation successfully identifies potential manipulation patterns in the hemoglobin distribution around the cutoff threshold.
+```{r example_interpretation, eval=FALSE}
+# The bounds tell us the range of plausible effects
+print(bounds_mat[optIndex, ])
 
-2. **Robustness Assessment**: By testing multiple manipulation regions, we assess how sensitive our conclusions are to different assumptions about manipulation extent.
+# Bootstrap confidence intervals add uncertainty quantification
+print(bootBounds$ci[optIndex, ])
+```
 
-3. **Model Selection**: Cross-validation selects the optimal spline specification, balancing model flexibility with overfitting concerns.
+Tight bounds excluding zero indicate robust identification of treatment effect direction and magnitude. Wide bounds or bounds including zero suggest substantial manipulation uncertainty or limited identification power.
 
-## Substantive Results
+## Parameter Selection
 
-The partial identification bounds provide robust estimates of the causal effect while acknowledging uncertainty about manipulation. Key findings include:
+**Manipulation regions**: Specify intervals based on institutional knowledge of manipulation possibilities. Multiple specifications should be tested for robustness assessment.
 
-- **Treatment Effect Bounds**: The estimated bounds capture the range of plausible treatment effects under different manipulation scenarios.
+**Computational parameters**: The `n_boot` parameter controls bootstrap replications (100-500 recommended), `knot_options` determines spline flexibility (3:8 typically sufficient), and `parallel` enables multicore processing on Unix systems.
 
-- **Policy Relevance**: Even with potential manipulation, we can make meaningful policy inferences about the effects of hemoglobin deferral policies on donor return behavior.
+**Data requirements**: The package expects numeric running variables, binary outcomes (0/1) for standard applications, and binary treatment indicators (0/1). Missing values should be handled prior to analysis.
 
-- **Confidence Intervals**: Bootstrap confidence intervals quantify sampling uncertainty around our bounds estimates.
-
-## Advantages of the Partial Identification Approach
-
-1. **Transparency**: Explicitly acknowledges and models potential manipulation rather than assuming it away.
-
-2. **Robustness**: Provides valid inference even when traditional RDD assumptions are violated.
-
-3. **Flexibility**: Allows researchers to test different manipulation scenarios and assess robustness.
-
-4. **Practical Value**: Delivers actionable policy insights even under uncertainty about manipulation extent.
-
-# Computational Performance Notes
-
-This analysis demonstrates the computational benefits of parallel processing in the `rdpartial` package:
+# Performance
 
 ```{r performance_summary}
 cat("Performance Summary:\n")
@@ -478,19 +470,9 @@ if(.Platform$OS.type != "windows") {
 }
 ```
 
-# Conclusion
+# Summary
 
-The `rdpartial` package provides a comprehensive framework for implementing partial identification methods in regression discontinuity designs with potential manipulation. This analysis demonstrates:
-
-1. **Methodological Rigor**: Systematic testing of multiple manipulation scenarios ensures robust conclusions.
-
-2. **Computational Efficiency**: Parallel processing capabilities make the analysis feasible for realistic sample sizes and bootstrap replications.
-
-3. **Practical Value**: The approach delivers actionable insights for policy-makers even under uncertainty about manipulation.
-
-4. **Transparency**: All assumptions about manipulation are made explicit and can be varied to assess robustness.
-
-Future extensions might include sensitivity analysis over additional parameters, alternative manipulation region specifications, or comparison with other robust RDD methods.
+This vignette demonstrates `rdpartial` package functionality for regression discontinuity designs with manipulation concerns. The package provides robust bounds estimation through density estimation, cross-validated model selection, and bootstrap inference. Key methodological features include explicit manipulation modeling, automatic spline specification selection, and parallel computational implementation.
 
 # References
 
