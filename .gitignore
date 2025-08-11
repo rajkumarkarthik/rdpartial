@@ -58,3 +58,6 @@ Thumbs.db
 /Meta/
 .Rdata
 .quarto
+
+# pkgdown site
+docs/
