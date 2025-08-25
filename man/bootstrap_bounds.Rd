@@ -12,6 +12,7 @@ bootstrap_bounds(
   cutoff,
   manip_regions,
   estimator = c("fuzzy", "sharp"),
+  treat_direction = c("increase", "decrease"),
   n_boot = 200L,
   poly_order = 1L,
   weight_var = NULL,
@@ -39,6 +40,10 @@ Required when \code{estimator = "fuzzy"}.}
 suspected manipulation intervals.}
 
 \item{estimator}{Either "fuzzy" (default) or "sharp".}
+
+\item{treat_direction}{Either "increase" (treatment prob. jumps \emph{up} at the
+cutoff – standard case) or "decrease" (jumps \emph{down}, e.g. donor \emph{deferral}
+example).  Determines the sign of the optimisation objective.}
 
 \item{n_boot}{Integer number of bootstrap replications (default \code{200}).}
 

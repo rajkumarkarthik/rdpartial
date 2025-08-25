@@ -22,7 +22,7 @@ simulate_rdd_data(
 )
 }
 \arguments{
-\item{n}{Integer sample size (≥ 1).}
+\item{n}{Integer sample size (>= 1).}
 
 \item{cutoff}{Numeric threshold.  Must be integer-aligned with the support of
 \code{x}.}
@@ -44,7 +44,7 @@ simulate_rdd_data(
 \item{p0, p1}{Treatment probabilities below / above cutoff when
 \code{design = "fuzzy"}.}
 
-\item{manip_width}{Numeric ≥ 0 - interval width subject to manipulation just
+\item{manip_width}{Numeric >= 0 - interval width subject to manipulation just
 below the cutoff.}
 
 \item{manip_prob}{Probability of manipulation for units in that interval
@@ -80,7 +80,7 @@ cutoff for quick sanity checks.
 \enumerate{
 \item Draw an \strong{integer} running variable \code{x} from either a Poisson or discrete
 uniform distribution.
-\item (Optional) Manipulate units with \code{x} in \verb{(cutoff − manip_width, cutoff)}
+\item (Optional) Manipulate units with \code{x} in \verb{(cutoff - manip_width, cutoff)}
 above the threshold with probability \code{manip_prob}.
 \item Generate potential outcomes \code{Y(0)} and \code{Y(1)} as quadratic functions of
 \code{x} plus Normal noise.

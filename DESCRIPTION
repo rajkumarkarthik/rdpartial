@@ -8,6 +8,7 @@ Authors@R:
       person(given = "Romain", family = "Gauriot", role = c("ctb")),
       person(given = "Robert", family = "Slonim", role = c("ctb"))
     )
+Author: Karthik Rajkumar [aut, cre], Evan Rosenman [aut], Romain Gauriot [ctb], Robert Slonim [ctb]
 Maintainer: Karthik Rajkumar <karthikr@alumni.stanford.edu>
 Description: Implements the partial identification approach for regression
     discontinuity designs when units may manipulate the running variable.

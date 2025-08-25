@@ -56,8 +56,8 @@ foundation for the fuzzy variant \code{\link[=bounds_fuzzy]{bounds_fuzzy()}}.
 \item \strong{\code{y}} – outcome measured under \emph{realised} treatment status (because the
 design is sharp, no separate \code{z} argument is needed).
 \item \strong{\code{cutoff}} – numeric threshold separating control (< cutoff) from
-treatment (≥ cutoff).
-\item \strong{\code{true_counts}} – \code{data.frame} with columns \code{x} (support points ≥ cutoff)
+treatment (>= cutoff).
+\item \strong{\code{true_counts}} – \code{data.frame} with columns \code{x} (support points >= cutoff)
 and \code{n_true} (estimated number of \strong{non‑manipulated} observations at each
 support point).  Typically produced by \code{\link[=.density_estimation]{.density_estimation()}}.
 }
