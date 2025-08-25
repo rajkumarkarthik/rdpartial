@@ -16,6 +16,8 @@ Description: Implements the partial identification approach for regression
     routine for confidence intervals. Based on methods described in 
     Rosenman, Rajkumar, Gauriot & Slonim (2025) <arXiv:1910.02170>.
 License: GPL (>= 3) + file LICENSE
+URL: https://rajkumarkarthik.github.io/rdpartial
+BugReports: https://github.com/rajkumarkarthik/rdpartial/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
