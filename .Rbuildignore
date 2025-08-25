@@ -5,3 +5,7 @@
 ^docs$
 ^_pkgdown\.yml$
 ^pkgdown$
+^doc$
+^Meta$
+^_pkgdown\.yml$
+^pkgdown$

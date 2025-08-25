@@ -61,3 +61,10 @@ rsconnect/
 .Trashes
 ehthumbs.db
 Thumbs.db
+/doc/
+/Meta/
+.Rdata
+.quarto
+
+# pkgdown site
+docs/
