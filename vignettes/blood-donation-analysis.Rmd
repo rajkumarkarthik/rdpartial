@@ -275,30 +275,12 @@ cat("Analyzing", length(manip_regions), "manipulation regions...\n\n")
 
 start_time <- Sys.time()
 
-# Run analysis across all manipulation regions  
-if (.Platform$OS.type == "windows") {
-  # Use cluster-based parallelization on Windows
-  cl <- parallel::makeCluster(n_cores)
-  on.exit(parallel::stopCluster(cl))
-  
-  # Export required objects to cluster
-  parallel::clusterEvalQ(cl, library(rdpartial))
-  parallel::clusterExport(cl, c("analyze_region", "manip_regions", "hist_df", 
-                                "dat", "cutoff", "num_folds", "w_kernel", 
-                                "outcome_col", "treatment_col", "poly_order", 
-                                "treat_direction"), envir = environment())
-  
-  results <- parallel::parLapply(cl, seq_along(manip_regions), function(j) {
-    analyze_region(j, manip_regions[[j]], hist_df, dat, cutoff, num_folds, 
-                  w_kernel, outcome_col, treatment_col, poly_order, treat_direction)
-  })
-} else {
-  # Use fork-based parallelization on Unix-like systems
-  results <- parallel::mclapply(seq_along(manip_regions), function(j) {
-    analyze_region(j, manip_regions[[j]], hist_df, dat, cutoff, num_folds, 
-                  w_kernel, outcome_col, treatment_col, poly_order, treat_direction)
-  }, mc.cores = n_cores)
-}
+# Run analysis across all manipulation regions sequentially
+# (Parallel processing omitted in vignettes to avoid package loading issues during build)
+results <- lapply(seq_along(manip_regions), function(j) {
+  analyze_region(j, manip_regions[[j]], hist_df, dat, cutoff, num_folds, 
+                w_kernel, outcome_col, treatment_col, poly_order, treat_direction)
+})
 
 end_time <- Sys.time()
 cat(sprintf("Analysis completed in %.2f minutes\n", 
