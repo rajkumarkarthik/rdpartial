@@ -393,8 +393,8 @@ print(treatment_plot)
 Bootstrap confidence intervals are computed using the `bootstrap_bounds()` function, which resamples observations while preserving the running variable distribution.
 
 ```{r bootstrap_setup}
-# Bootstrap parameters
-n_boot <- 100  # Increase as needed at the cost of slower computation
+# Bootstrap parameters  
+n_boot <- if (identical(Sys.getenv("CI"), "true")) 10 else 100  # Reduced for CI builds
 
 cat("Computing bootstrap confidence intervals...\n")
 cat(sprintf("Bootstrap replications: %d\n", n_boot))
