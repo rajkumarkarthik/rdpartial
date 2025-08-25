@@ -1,21 +1,4 @@
----
-title: "Partial Identification in Blood Donation RDD Analysis"
-subtitle: "Using Simulated Data for Package Demonstration"
-author: "Karthik Rajkumar, Evan Rosenman, Romain Gauriot, Robert Slonim"
-date: "`r Sys.Date()`"
-output: 
-  rmarkdown::html_vignette:
-    toc: true
-    toc_depth: 3
-    number_sections: true
-vignette: >
-  %\VignetteIndexEntry{Partial Identification in Blood Donation RDD Analysis}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
-bibliography: references.bib
----
-
-```{r setup, include = FALSE}
+## ----setup, include = FALSE---------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
@@ -24,35 +7,17 @@ knitr::opts_chunk$set(
   warning = FALSE,
   message = FALSE
 )
-```
 
-# Introduction
 
-The `rdpartial` package implements partial identification methods for regression discontinuity designs when units may manipulate the running variable. This vignette demonstrates the package functionality using **simulated blood donation data**, where potential donors near the hemoglobin cutoff may influence their readings.
+## ----installation, eval = FALSE-----------------------------------------------
+# # Install from GitHub (development version)
+# if (!requireNamespace("devtools", quietly = TRUE)) {
+#   install.packages("devtools")
+# }
+# devtools::install_github("rajkumarkarthik/rdpartial")
 
-Standard RDD estimators assume no manipulation in the running variable. When this assumption fails, estimates may be severely biased. The `rdpartial` package provides robust bounds on treatment effects that remain valid under various manipulation scenarios. The methodology is detailed in @rosenman2025donorsdeferralreturnbehavior.
 
-## Methodology
-
-The package addresses manipulation concerns by:
-
-**Acknowledging manipulation uncertainty**: Rather than assuming no manipulation, the approach explicitly models manipulation intervals where units may influence their running variable values.
-
-**Providing bounds**: Instead of point estimates that may be biased, the method delivers bounds that capture the range of plausible treatment effects under different manipulation scenarios.
-
-**Ensuring robustness**: The bounds account for worst-case manipulation within the specified region. The bounds remain valid regardless of the exact manipulation pattern, provided manipulation does not exceed the assumed region boundaries.
-
-# Package Installation and Setup
-
-```{r installation, eval = FALSE}
-# Install from GitHub (development version)
-if (!requireNamespace("devtools", quietly = TRUE)) {
-  install.packages("devtools")
-}
-devtools::install_github("rajkumarkarthik/rdpartial")
-```
-
-```{r libraries}
+## ----libraries----------------------------------------------------------------
 library(rdpartial)
 library(dplyr)
 library(ggplot2)
@@ -60,13 +25,9 @@ library(parallel)
 
 # Set analysis parameters
 set.seed(2021)
-```
 
-# Analysis Configuration
 
-We begin by setting key parameters for our analysis. These can be modified to explore different scenarios or replicate specific results.
-
-```{r parameters}
+## ----parameters---------------------------------------------------------------
 # Analysis settings
 analysisGender  <- "F"  # Focus on female donors
 cutoff          <- ifelse(analysisGender == "M", 13.5, 12.5)   # Hemoglobin threshold (g/dL)
@@ -83,13 +44,9 @@ num_folds       <- 5L                       # Cross-validation folds for density
 
 # Parallel computing settings - memory-aware core allocation
 n_cores <- min(4L, parallel::detectCores() - 1L)  # Cap at 4 cores for memory safety
-```
 
-## Defining Manipulation Regions
 
-The primary input to `rdpartial` functions is the specification of manipulation intervals where units may influence their running variable values. The analysis tests multiple manipulation regions to assess robustness across different manipulation assumptions.
-
-```{r manipulation_regions}
+## ----manipulation_regions-----------------------------------------------------
 # Define candidate manipulation intervals
 # These represent different assumptions about manipulation extent
 if(analysisGender == 'F') {
@@ -114,13 +71,9 @@ if(analysisGender == 'F') {
 
 cat("Testing", length(manip_regions), "manipulation regions for", 
     ifelse(analysisGender == 'F', "women", "men"), "\n")
-```
 
-# Data Preparation
 
-The analysis uses **simulated blood donation data** that replicates the structure of the original study. The simulated data is publicly available for demonstration purposes in the study since the original study data consists of confidential medical records.
-
-```{r data_loading}
+## ----data_loading-------------------------------------------------------------
 # Load simulated data from GitHub repository
 # NOTE: This is simulated data, not the original confidential medical records
 data_url <- "https://raw.githubusercontent.com/rajkumarkarthik/rdpartial-data/main/Rosenman.et.al.2025_simulated_data_all.csv"
@@ -153,13 +106,9 @@ if (outcome_col == "Ndaytonextdonation") {
 cat("Analysis dataset: ", nrow(dat), "observations\n")
 cat("Outcome variable:", outcome_col, "\n")
 cat("Treatment variable:", treatment_col, "\n")
-```
 
-# Data Preprocessing
 
-The analysis requires constructing a histogram of the running variable and computing tricubic kernel weights for local polynomial estimation.
-
-```{r preliminaries}
+## ----preliminaries------------------------------------------------------------
 # Create histogram for density estimation
 hist_df <- dat %>%
   count(hlevel, name = "freq") %>%
@@ -179,13 +128,9 @@ w_kernel[ix_right] <- rdpartial:::.tricube(dat$hlevel[ix_right] - cutoff)
 
 cat("Kernel weights computed for", sum(ix_left), "left-side and", 
     sum(ix_right), "right-side observations\n")
-```
 
-# Estimation
 
-The estimation procedure tests each manipulation region, with automatic spline specification selection via cross-validation. Parallel processing is employed for computational efficiency.
-
-```{r analysis_function}
+## ----analysis_function--------------------------------------------------------
 # Define analysis function for a single manipulation region
 analyze_region <- function(j, region, hist_df, dat, cutoff, num_folds, 
                           w_kernel, outcome_col, treatment_col, poly_order, 
@@ -270,9 +215,9 @@ analyze_region_with_plots <- function(j, region, hist_df, dat, cutoff, num_folds
     density_plot = dens_out$plot
   )
 }
-```
 
-```{r parallel_analysis}
+
+## ----parallel_analysis--------------------------------------------------------
 cat("Starting parallel analysis across", length(manip_regions), "manipulation regions...\n")
 cat("Using", n_cores, "cores for parallel computation\n\n")
 
@@ -320,15 +265,11 @@ if(.Platform$OS.type == "windows") {
 end_time <- Sys.time()
 cat(sprintf("\nAnalysis completed in %.2f minutes\n", 
            as.numeric(difftime(end_time, start_time, units = "mins"))))
-```
 
-# Results
 
-The following sections present bounds estimates across manipulation regions and identify the optimal specification based on cross-validation performance.
-
-```{r results_summary}
-# Extract bounds matrix - handle simplified bounds structure
-bounds_mat <- do.call(rbind, lapply(results, function(x) x$bounds))
+## ----results_summary----------------------------------------------------------
+# Extract bounds matrix
+bounds_mat <- do.call(rbind, lapply(results, function(x) x$bounds$bounds))
 rownames(bounds_mat) <- paste0("R", seq_along(manip_regions))
 
 cat("Partial-identification bounds across manipulation regions:\n")
@@ -357,13 +298,9 @@ cat("\nGenerating diagnostic plots for optimal region...\n")
 opt_results <- analyze_region_with_plots(optIndex, opt_region, hist_df, dat, cutoff, 
                                         num_folds, w_kernel, outcome_col, treatment_col, 
                                         poly_order, treat_direction)
-```
 
-# Visualization
 
-The package generates diagnostic plots for density estimation, outcome analysis, and treatment assignment patterns.
-
-```{r plots, fig.width=10, fig.height=12}
+## ----plots, fig.width=10, fig.height=12---------------------------------------
 # Plot density estimation for optimal region
 density_plot <- opt_results$density_plot +
   ggtitle(paste0('Density Estimation - Optimal Manipulation Region for ',
@@ -386,13 +323,9 @@ treatment_plot <- opt_results$bounds$zPlot +
   theme_minimal()
 
 print(treatment_plot)
-```
 
-# Bootstrap Inference
 
-Bootstrap confidence intervals are computed using the `bootstrap_bounds()` function, which resamples observations while preserving the running variable distribution.
-
-```{r bootstrap_setup}
+## ----bootstrap_setup----------------------------------------------------------
 # Bootstrap parameters
 n_boot <- 100  # Increase as needed at the cost of slower computation
 
@@ -400,9 +333,9 @@ cat("Computing bootstrap confidence intervals...\n")
 cat(sprintf("Bootstrap replications: %d\n", n_boot))
 cat(sprintf("Parallel cores: %d\n", n_cores))
 cat("This may take several minutes...\n\n")
-```
 
-```{r bootstrap_analysis}
+
+## ----bootstrap_analysis-------------------------------------------------------
 # Enhanced bootstrap with progress reporting
 start_boot_time <- Sys.time()
 
@@ -441,9 +374,9 @@ end_boot_time <- Sys.time()
 boot_duration <- as.numeric(difftime(end_boot_time, start_boot_time, units = "mins"))
 
 cat(sprintf("\nBootstrap analysis completed in %.2f minutes\n", boot_duration))
-```
 
-```{r bootstrap_results}
+
+## ----bootstrap_results--------------------------------------------------------
 # Display bootstrap confidence intervals
 cat("Bootstrap 95% Confidence Intervals:\n")
 print(bootBounds)
@@ -469,35 +402,17 @@ cat(sprintf("• Point bounds: [%.4f, %.4f]\n",
            bounds_mat[optIndex, "lower"], bounds_mat[optIndex, "upper"]))
 cat(sprintf("• 95%% CI: [%.4f, %.4f]\n", opt_ci["lwr"], opt_ci["upr"]))
 cat(sprintf("• CI width: %.4f\n", opt_ci["upr"] - opt_ci["lwr"]))
-```
 
-# Implementation Notes
 
-## Bounds Interpretation
+## ----example_interpretation, eval=FALSE---------------------------------------
+# # The bounds tell us the range of plausible effects
+# print(bounds_mat[optIndex, ])
+# 
+# # Bootstrap confidence intervals add uncertainty quantification
+# print(bootBounds$ci[optIndex, ])
 
-The bounds matrix contains the range of plausible treatment effects under each manipulation scenario:
 
-```{r example_interpretation, eval=FALSE}
-# The bounds tell us the range of plausible effects
-print(bounds_mat[optIndex, ])
-
-# Bootstrap confidence intervals add uncertainty quantification
-print(bootBounds$ci[optIndex, ])
-```
-
-Tight bounds excluding zero indicate robust identification of treatment effect direction and magnitude. Wide bounds or bounds including zero suggest substantial manipulation uncertainty or limited identification power.
-
-## Parameter Selection
-
-**Manipulation regions**: Specify intervals based on institutional knowledge of manipulation possibilities. Multiple specifications should be tested for robustness assessment.
-
-**Computational parameters**: The `n_boot` parameter controls bootstrap replications (100-500 recommended), `knot_options` determines spline flexibility (3:8 typically sufficient), and `parallel` enables multicore processing on Unix systems.
-
-**Data requirements**: The package expects numeric running variables, binary outcomes (0/1) for standard applications, and binary treatment indicators (0/1). Missing values should be handled prior to analysis.
-
-# Performance
-
-```{r performance_summary}
+## ----performance_summary------------------------------------------------------
 cat("Performance Summary:\n")
 cat("===================\n")
 cat(sprintf("Analysis duration: %.2f minutes\n", 
@@ -517,12 +432,4 @@ if(.Platform$OS.type != "windows") {
   cat("consider running this analysis on Unix-like systems\n")
   cat("where parallel processing is fully supported.\n")
 }
-```
 
-# Summary
-
-This vignette demonstrates `rdpartial` package functionality for regression discontinuity designs with manipulation concerns. The package provides robust bounds estimation through density estimation, cross-validated model selection, and bootstrap inference. Key methodological features include explicit manipulation modeling, automatic spline specification selection, and parallel computational implementation.
-
-# References
-
-For more details on the theoretical foundations, see @rosenman2025donorsdeferralreturnbehavior. The package documentation provides additional technical details and examples for various use cases.
