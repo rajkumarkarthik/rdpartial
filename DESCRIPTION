@@ -8,8 +8,6 @@ Authors@R:
       person(given = "Romain", family = "Gauriot", role = c("ctb")),
       person(given = "Robert", family = "Slonim", role = c("ctb"))
     )
-Author: Karthik Rajkumar [aut, cre], Evan Rosenman [aut], Romain Gauriot [ctb], Robert Slonim [ctb]
-Maintainer: Karthik Rajkumar <karthikr@alumni.stanford.edu>
 Description: Implements the partial identification approach for regression
     discontinuity designs when units may manipulate the running variable.
     Provides functions to estimate bounds for sharp and fuzzy designs,
@@ -17,6 +15,8 @@ Description: Implements the partial identification approach for regression
     routine for confidence intervals. Based on methods described in 
     Rosenman, Rajkumar, Gauriot & Slonim (2025) <arXiv:1910.02170>.
 License: GPL (>= 3) + file LICENSE
+URL: https://rajkumarkarthik.github.io/rdpartial
+BugReports: https://github.com/rajkumarkarthik/rdpartial/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
