@@ -186,12 +186,12 @@ cat("Kernel weights computed for", sum(ix_left), "left-side and",
 The estimation procedure tests each manipulation region, with automatic spline specification selection via cross-validation. Parallel processing is employed for computational efficiency.
 
 ```{r analysis_function}
-# Define analysis function for a single manipulation region
+# Analysis function for each manipulation region
 analyze_region <- function(j, region, hist_df, dat, cutoff, num_folds, 
                           w_kernel, outcome_col, treatment_col, poly_order, 
                           treat_direction) {
   
-  # Density estimation to obtain non-manipulated counts
+  # Step 1: Estimate density under no manipulation assumption
   dens_out <- rdpartial:::.density_estimation(
     hist_df      = hist_df,
     manip_region = region,
@@ -199,10 +199,10 @@ analyze_region <- function(j, region, hist_df, dat, cutoff, num_folds,
     knot_options = 3:8,
     mod_types    = "smooth",
     num_folds    = num_folds,
-    make_plot    = FALSE  # Disable plots during parallel processing to save memory
+    make_plot    = FALSE
   )
   
-  # Partial-identification bounds computation (fuzzy design)
+  # Step 2: Compute partial identification bounds
   bnds <- rdpartial::bounds_fuzzy(
     x               = dat$hlevel,
     y               = dat[[outcome_col]],
@@ -213,12 +213,11 @@ analyze_region <- function(j, region, hist_df, dat, cutoff, num_folds,
     poly_order      = poly_order,
     treat_direction = treat_direction,
     bounds          = "both",
-    runVarPlots     = FALSE,  # Disable plots during parallel processing to save memory
+    runVarPlots     = FALSE,
     ylab            = outcome_col,
     xlab            = "Hemoglobin Level (g/dL)"
   )
   
-  # Return comprehensive results
   list(
     region_id    = j,
     bounds       = bnds,
@@ -228,12 +227,12 @@ analyze_region <- function(j, region, hist_df, dat, cutoff, num_folds,
   )
 }
 
-# Define analysis function with plots for optimal region only
+# Same analysis function but with plots enabled for optimal region
 analyze_region_with_plots <- function(j, region, hist_df, dat, cutoff, num_folds, 
                                      w_kernel, outcome_col, treatment_col, poly_order, 
                                      treat_direction) {
   
-  # Density estimation with plots enabled
+  # Step 1: Estimate density (with plots)
   dens_out <- rdpartial:::.density_estimation(
     hist_df      = hist_df,
     manip_region = region,
@@ -241,10 +240,10 @@ analyze_region_with_plots <- function(j, region, hist_df, dat, cutoff, num_folds
     knot_options = 3:8,
     mod_types    = "smooth",
     num_folds    = num_folds,
-    make_plot    = TRUE  # Enable plots for optimal region
+    make_plot    = TRUE
   )
   
-  # Partial-identification bounds computation with plots
+  # Step 2: Compute bounds (with plots)
   bnds <- rdpartial::bounds_fuzzy(
     x               = dat$hlevel,
     y               = dat[[outcome_col]],
@@ -255,12 +254,11 @@ analyze_region_with_plots <- function(j, region, hist_df, dat, cutoff, num_folds
     poly_order      = poly_order,
     treat_direction = treat_direction,
     bounds          = "both",
-    runVarPlots     = TRUE,  # Enable plots for optimal region
+    runVarPlots     = TRUE,
     ylab            = outcome_col,
     xlab            = "Hemoglobin Level (g/dL)"
   )
   
-  # Return comprehensive results with plots
   list(
     region_id    = j,
     bounds       = bnds,
@@ -273,52 +271,18 @@ analyze_region_with_plots <- function(j, region, hist_df, dat, cutoff, num_folds
 ```
 
 ```{r parallel_analysis}
-cat("Starting parallel analysis across", length(manip_regions), "manipulation regions...\n")
-cat("Using", n_cores, "cores for parallel computation\n\n")
+cat("Analyzing", length(manip_regions), "manipulation regions...\n\n")
 
-# Set up progress reporting
 start_time <- Sys.time()
 
-# Parallel execution with progress updates
-if(.Platform$OS.type == "windows") {
-  # Use sequential processing on Windows (with progress bar)
-  cat("Windows detected: using sequential processing with progress bar\n")
-  
-  pb <- txtProgressBar(min = 0, max = length(manip_regions), style = 3)
-  results <- vector("list", length(manip_regions))
-  
-  for(j in seq_along(manip_regions)) {
-    region <- manip_regions[[j]]
-    cat(sprintf("\n• Processing Region %d: [%0.2f, %0.2f]\n", j, region[1], region[2]))
-    
-    results[[j]] <- analyze_region(j, region, hist_df, dat, cutoff, num_folds, 
-                                  w_kernel, outcome_col, treatment_col, 
-                                  poly_order, treat_direction)
-    
-    setTxtProgressBar(pb, j)
-  }
-  close(pb)
-  
-} else {
-  # Use parallel processing on Unix-like systems
-  cat("Unix-like system detected: using parallel processing\n")
-  
-  # Display progress by printing region information
-  for(j in seq_along(manip_regions)) {
-    region <- manip_regions[[j]]
-    cat(sprintf("• Queued Region %d: [%0.2f, %0.2f]\n", j, region[1], region[2]))
-  }
-  cat("\nExecuting parallel analysis...\n")
-  
-  # Execute in parallel
-  results <- parallel::mclapply(seq_along(manip_regions), function(j) {
-    analyze_region(j, manip_regions[[j]], hist_df, dat, cutoff, num_folds, 
-                  w_kernel, outcome_col, treatment_col, poly_order, treat_direction)
-  }, mc.cores = n_cores)
-}
+# Run analysis across all manipulation regions  
+results <- parallel::mclapply(seq_along(manip_regions), function(j) {
+  analyze_region(j, manip_regions[[j]], hist_df, dat, cutoff, num_folds, 
+                w_kernel, outcome_col, treatment_col, poly_order, treat_direction)
+}, mc.cores = n_cores)
 
 end_time <- Sys.time()
-cat(sprintf("\nAnalysis completed in %.2f minutes\n", 
+cat(sprintf("Analysis completed in %.2f minutes\n", 
            as.numeric(difftime(end_time, start_time, units = "mins"))))
 ```
 
@@ -390,38 +354,25 @@ print(treatment_plot)
 
 # Bootstrap Inference
 
-Bootstrap confidence intervals are computed using the `bootstrap_bounds()` function, which resamples observations while preserving the running variable distribution.
-
-```{r bootstrap_setup}
-# Bootstrap parameters  
-n_boot <- if (identical(Sys.getenv("CI"), "true")) 10 else 100  # Reduced for CI builds
-
-cat("Computing bootstrap confidence intervals...\n")
-cat(sprintf("Bootstrap replications: %d\n", n_boot))
-cat(sprintf("Parallel cores: %d\n", n_cores))
-cat("This may take several minutes...\n\n")
+```{r bootstrap_check}
+# Bootstrap analysis (skipped in CI to avoid timeouts)
+if (identical(Sys.getenv("CI"), "true")) {
+  cat("Bootstrap analysis skipped in CI - run locally for confidence intervals.\n")
+} else {
+  cat("Computing bootstrap confidence intervals...\n")
+}
 ```
 
-```{r bootstrap_analysis}
-# Enhanced bootstrap with progress reporting
+```{r bootstrap_setup, eval = !identical(Sys.getenv("CI"), "true")}
+# Bootstrap confidence intervals with 100 replications
+n_boot <- 100
+cat(sprintf("Running %d bootstrap replications (this may take several minutes)...\n", n_boot))
+```
+
+```{r bootstrap_analysis, eval = !identical(Sys.getenv("CI"), "true")}
 start_boot_time <- Sys.time()
 
-# Display initial information
-cat("Bootstrap analysis configuration:\n")
-cat(sprintf("• Simulated dataset: %d observations (%s donors)\n", nrow(dat), 
-           ifelse(analysisGender == 'F', "female", "male")))
-cat(sprintf("• Manipulation regions: %d scenarios\n", length(manip_regions)))
-cat(sprintf("• Bootstrap replications: %d\n", n_boot))
-cat(sprintf("• Parallel processing: %s\n", 
-           ifelse(.Platform$OS.type != "windows", "enabled", "disabled (Windows)")))
-
-if(.Platform$OS.type != "windows") {
-  cat("Note: Progress updates are limited during parallel bootstrap execution\n")
-  cat("to avoid output conflicts. Please be patient...\n\n")
-}
-
-# Execute bootstrap with memory-aware parallel processing
-# Note: Using the same memory-safe core limit as in the main analysis
+# Bootstrap confidence intervals 
 bootBounds <- rdpartial::bootstrap_bounds(
   data            = dat,
   running_var     = 'hlevel',
@@ -431,19 +382,17 @@ bootBounds <- rdpartial::bootstrap_bounds(
   manip_regions   = manip_regions,
   estimator       = 'fuzzy',
   n_boot          = n_boot,
-  parallel        = (.Platform$OS.type != "windows"),
-  n_cores         = n_cores,  # Uses the memory-safe core limit set earlier
-  progress        = (.Platform$OS.type == "windows"),
+  parallel        = TRUE,
+  n_cores         = n_cores,
   seed            = 2021
 )
 
 end_boot_time <- Sys.time()
 boot_duration <- as.numeric(difftime(end_boot_time, start_boot_time, units = "mins"))
-
-cat(sprintf("\nBootstrap analysis completed in %.2f minutes\n", boot_duration))
+cat(sprintf("Bootstrap completed in %.2f minutes\n", boot_duration))
 ```
 
-```{r bootstrap_results}
+```{r bootstrap_results, eval = !identical(Sys.getenv("CI"), "true")}
 # Display bootstrap confidence intervals
 cat("Bootstrap 95% Confidence Intervals:\n")
 print(bootBounds)
@@ -477,7 +426,7 @@ cat(sprintf("• CI width: %.4f\n", opt_ci["upr"] - opt_ci["lwr"]))
 
 The bounds matrix contains the range of plausible treatment effects under each manipulation scenario:
 
-```{r example_interpretation, eval=FALSE}
+```{r example_interpretation, eval=FALSE && !identical(Sys.getenv("CI"), "true")}
 # The bounds tell us the range of plausible effects
 print(bounds_mat[optIndex, ])
 
@@ -502,21 +451,15 @@ cat("Performance Summary:\n")
 cat("===================\n")
 cat(sprintf("Analysis duration: %.2f minutes\n", 
            as.numeric(difftime(end_time, start_time, units = "mins"))))
-cat(sprintf("Bootstrap duration: %.2f minutes\n", boot_duration))
-cat(sprintf("Total computation time: %.2f minutes\n", 
-           as.numeric(difftime(end_boot_time, start_time, units = "mins"))))
-cat(sprintf("Parallel cores utilized: %d\n", n_cores))
-cat(sprintf("Bootstrap replications: %d\n", n_boot))
-cat(sprintf("Manipulation regions tested: %d\n", length(manip_regions)))
 
-if(.Platform$OS.type != "windows") {
-  cat("\nParallel processing significantly reduced computation time.\n")
-  cat("Sequential processing would require substantially longer.\n")
-} else {
-  cat("\nFor optimal performance on multi-core systems,\n")
-  cat("consider running this analysis on Unix-like systems\n")
-  cat("where parallel processing is fully supported.\n")
+# Show bootstrap info only if it ran
+if (!identical(Sys.getenv("CI"), "true")) {
+  cat(sprintf("Bootstrap duration: %.2f minutes\n", boot_duration))  
+  cat(sprintf("Bootstrap replications: %d\n", n_boot))
 }
+
+cat(sprintf("Parallel cores used: %d\n", n_cores))
+cat(sprintf("Manipulation regions tested: %d\n", length(manip_regions)))
 ```
 
 # Summary
