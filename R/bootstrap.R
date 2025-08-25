@@ -165,7 +165,7 @@ bootstrap_bounds <- function(data, running_var, outcome, treatment = NULL,
 
   # Run bootstrap -------------------------------------------------------
   if (parallel && .Platform$OS.type != "windows") {
-    if (is.null(n_cores)) n_cores <- max(1L, parallel::detectCores() - 1L)
+    if (is.null(n_cores)) n_cores <- min(4L, parallel::detectCores() - 1L)  # Cap at 4 cores for memory safety
     runner   <- function(X, FUN) parallel::mclapply(X, FUN, mc.cores = n_cores)
     progress <- FALSE  # suppress progress bar under fork
   } else {
