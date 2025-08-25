@@ -42,7 +42,7 @@ cross-validate over.  Allowed values are:
 }}
 
 \item{lambda}{Penalty weight on total predicted mass inside the manipulation
-region (higher => stricter mass match).  Default \code{100} (paper default).}
+region (higher ⇒ stricter mass match).  Default \code{100} (paper default).}
 
 \item{eps}{Numeric slack for the CVXR continuity constraints (default \code{1e-6}).}
 
